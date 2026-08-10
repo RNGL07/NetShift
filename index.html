@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetShift</title>
+  <style>
+    html, body, #root { margin: 0; padding: 0; min-height: 100%; background: #14171A; }
+  </style>
+
+  <!-- React + ReactDOM (UMD builds, no build step needed) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <!-- Babel standalone lets the browser transform JSX at runtime, so no bundler/build step is required -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // Polyfills window.storage with the same get/set/delete/list shape the
+    // original artifact used, backed by real localStorage so all of the
+    // app's existing storage calls work unchanged. Missing keys throw,
+    // matching the artifact's behavior (the app already wraps every
+    // storage.get in try/catch for this reason).
+    (function () {
+      const PREFIX = "netshift:";
+      window.storage = {
+        get: async function (key) {
+          const raw = window.localStorage.getItem(PREFIX + key);
+          if (raw === null) throw new Error("Key not found: " + key);
+          return { key: key, value: raw, shared: false };
+        },
+        set: async function (key, value) {
+          window.localStorage.setItem(PREFIX + key, value);
+          return { key: key, value: value, shared: false };
+        },
+        delete: async function (key) {
+          window.localStorage.removeItem(PREFIX + key);
+          return { key: key, deleted: true, shared: false };
+        },
+        list: async function (prefix) {
+          const p = PREFIX + (prefix || "");
+          const keys = Object.keys(window.localStorage)
+            .filter(function (k) { return k.indexOf(p) === 0; })
+            .map(function (k) { return k.slice(PREFIX.length); });
+          return { keys: keys };
+        },
+      };
+    })();
+  </script>
+
+  <!-- The converted app component (JSX, transformed in-browser by Babel) -->
+  <script type="text/babel" data-presets="react" src="/app.jsx"></script>
+
+  <script type="text/babel" data-presets="react">
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
