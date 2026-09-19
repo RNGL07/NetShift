@@ -90,6 +90,328 @@ function fileToBase64(file) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Local (free) PDF parsing
+//
+// A PDF exported straight out of a payroll portal carries a real text layer, so
+// the numbers can be read in the browser with no upload and no API call. A
+// photo, or a scan that happens to be saved as a PDF, has no text layer — those
+// keep going to the vision path below, unchanged.
+// ---------------------------------------------------------------------------
+
+// Below this many non-whitespace characters, whatever pdf.js handed back is
+// stray metadata rather than a real text layer.
+const MIN_TEXT_LAYER_CHARS = 40;
+
+// Returns the PDF's text layer as newline-separated lines, with the items on
+// each visual row joined in reading order, or null when there's no usable text
+// layer (the caller reads null as "fall back to the vision path").
+async function extractPdfTextLayer(file) {
+  if (!window.pdfjsLib) return null;
+  try {
+    const buffer = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: new Uint8Array(buffer) }).promise;
+    const lines = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      // Group items into visual rows by baseline, so a label and the amount
+      // sitting beside it land on one line — the field parsers lean on that.
+      const rows = new Map();
+      (content.items || []).forEach((item) => {
+        if (!item || typeof item.str !== "string" || !item.str.trim()) return;
+        const x = item.transform ? item.transform[4] : 0;
+        const y = item.transform ? item.transform[5] : 0;
+        const bucket = Math.round(y / 3); // ~3pt tolerance for baseline jitter
+        if (!rows.has(bucket)) rows.set(bucket, []);
+        rows.get(bucket).push({ x: x, str: item.str });
+      });
+      Array.from(rows.keys())
+        .sort((a, b) => b - a) // top of the page downward
+        .forEach((bucket) => {
+          const text = rows
+            .get(bucket)
+            .sort((a, b) => a.x - b.x) // left to right
+            .map((it) => it.str)
+            .join(" ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (text) lines.push(text);
+        });
+    }
+    const text = lines.join("\n");
+    if (text.replace(/\s/g, "").length < MIN_TEXT_LAYER_CHARS) return null;
+    return text;
+  } catch (e) {
+    // Encrypted, corrupt, or otherwise unreadable — treat it like a scan.
+    return null;
+  }
+}
+
+function toTextLines(text) {
+  return String(text || "")
+    .split("\n")
+    .map((l) => l.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+// "$1,234.56" / "(1,234.56)" / "-1234.56" -> a plain number.
+function parseLocalNumber(raw) {
+  if (raw === null || raw === undefined) return null;
+  let s = String(raw).trim();
+  const negative = /^\(.*\)$/.test(s) || /^-|\$\s*-/.test(s);
+  s = s.replace(/[()]/g, "").replace(/[$,\s-]/g, "");
+  if (!s || !/^\d*\.?\d+$/.test(s)) return null;
+  const n = Number(s);
+  if (isNaN(n)) return null;
+  return negative ? -n : n;
+}
+
+function firstNumberIn(segment) {
+  const m = String(segment).match(/\(?-?\$\s?-?\d[\d,]*(?:\.\d+)?\)?|\(?-?\d[\d,]*(?:\.\d+)?\)?/);
+  return m ? parseLocalNumber(m[0]) : null;
+}
+
+// Money is either $-prefixed or written with cents — requiring one of those
+// keeps years, employee numbers, and check numbers from being read as amounts.
+function moneyIn(segment) {
+  const m = String(segment).match(/\(?-?\$\s?-?\d[\d,]*(?:\.\d+)?\)?|\(?-?\d[\d,]*\.\d{2}\)?/);
+  if (!m) return null;
+  const n = parseLocalNumber(m[0]);
+  return n === null ? null : Math.abs(n);
+}
+
+function numberIn(segment) {
+  const n = firstNumberIn(segment);
+  return n === null ? null : Math.abs(n);
+}
+
+// Hourly premiums are small per-hour dollar figures; anything larger is some
+// other number that happened to sit next to the label.
+function premiumIn(segment) {
+  const n = firstNumberIn(segment);
+  if (n === null) return null;
+  const abs = Math.abs(n);
+  return abs <= 50 ? abs : null;
+}
+
+const LOCAL_DATE_RE = new RegExp(
+  "\\d{4}-\\d{2}-\\d{2}" +
+    "|\\d{1,2}[\\/\\-.]\\d{1,2}[\\/\\-.]\\d{2,4}" +
+    "|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?\\s+\\d{1,2},?\\s+\\d{4}",
+  "i"
+);
+
+function dateIn(segment) {
+  const m = String(segment).match(LOCAL_DATE_RE);
+  return m ? m[0].trim() : null;
+}
+
+function textIn(segment) {
+  const t = String(segment).replace(/^[\s:\-–—]+/, "").trim();
+  return t && /[a-z]/i.test(t) ? t.slice(0, 80) : null;
+}
+
+// Matches a label as a whole word, tolerating however the PDF spaced it out.
+function localLabelPattern(label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s*");
+  return new RegExp("(?:^|[^a-z0-9])" + escaped + "(?:[^a-z0-9]|$)", "i");
+}
+
+// Walks the synonym list most-specific first, and for each one scans every
+// line, pulling the value from the rest of that line or from the line below
+// (payroll PDFs put the amount in either place depending on the layout).
+function findLabeledValue(lines, labels, extract, opts) {
+  const allowNextLine = !opts || opts.allowNextLine !== false;
+  for (let li = 0; li < labels.length; li++) {
+    const re = localLabelPattern(labels[li]);
+    for (let i = 0; i < lines.length; i++) {
+      const m = re.exec(lines[i]);
+      if (!m) continue;
+      const after = lines[i].slice(m.index + m[0].length);
+      const here = extract(after);
+      if (here !== null && here !== undefined) return here;
+      if (allowNextLine && i + 1 < lines.length) {
+        const below = extract(lines[i + 1]);
+        if (below !== null && below !== undefined) return below;
+      }
+    }
+  }
+  return null;
+}
+
+// Returns { data, confidence } where data is exactly the shape
+// extractStubData() returns, so the save path stays identical.
+function parseStubTextLocally(text) {
+  const lines = toTextLines(text);
+
+  const data = {
+    pay_date: findLabeledValue(
+      lines,
+      ["pay date", "check date", "payment date", "advice date", "date of pay", "pay period ending", "period ending", "pay period end", "period end"],
+      dateIn
+    ),
+    gross_pay: findLabeledValue(
+      lines,
+      ["total gross pay", "gross pay", "total gross", "gross earnings", "gross wages", "total earnings", "gross income", "gross"],
+      moneyIn
+    ),
+    federal_tax: findLabeledValue(
+      lines,
+      ["federal income tax", "federal withholding", "fed income tax", "federal tax", "fed tax", "fed w/h", "fed withholding", "fed inc tax", "fitw", "fit w/h", "fit"],
+      moneyIn
+    ),
+    state_tax: findLabeledValue(
+      lines,
+      ["state income tax", "state withholding", "state tax", "state w/h", "st income tax", "st tax", "sitw", "sit w/h", "sit"],
+      moneyIn
+    ),
+    social_security: findLabeledValue(
+      lines,
+      ["social security tax", "social security", "soc sec tax", "soc sec", "ss tax", "ss w/h", "fica ss", "fica soc sec", "oasdi"],
+      moneyIn
+    ),
+    medicare: findLabeledValue(lines, ["medicare tax", "medicare w/h", "medicare", "med tax", "fica med", "fica medicare"], moneyIn),
+    other_deductions_total: findLabeledValue(
+      lines,
+      ["total other deductions", "other deductions", "other ded", "voluntary deductions", "post tax deductions", "pre tax deductions"],
+      moneyIn
+    ),
+    net_pay: findLabeledValue(
+      lines,
+      ["net pay", "net amount", "take home pay", "take-home pay", "net check", "net earnings", "net deposit", "direct deposit amount", "check amount", "net"],
+      moneyIn
+    ),
+    hours_worked: findLabeledValue(
+      lines,
+      ["total hours worked", "hours worked", "total hours", "regular hours", "reg hours", "reg hrs", "total hrs", "hours"],
+      numberIn
+    ),
+    hourly_rate: findLabeledValue(lines, ["hourly rate", "base rate", "regular rate", "reg rate", "rate of pay", "pay rate", "rate"], numberIn),
+  };
+
+  // "Total deductions" includes the taxes, so it only stands in for the "other"
+  // bucket once every tax line has been found and can be subtracted back out.
+  if (data.other_deductions_total === null) {
+    const totalDed = findLabeledValue(lines, ["total deductions", "deductions total", "total dedns"], moneyIn);
+    const taxes = [data.federal_tax, data.state_tax, data.social_security, data.medicare];
+    if (totalDed !== null && taxes.every((t) => t !== null)) {
+      const remainder = totalDed - taxes.reduce((sum, t) => sum + t, 0);
+      if (remainder >= 0) data.other_deductions_total = Math.round(remainder * 100) / 100;
+    }
+  }
+
+  const fieldsFound = Object.keys(data).filter((k) => data[k] !== null && data[k] !== undefined).length;
+  const coreFound = [data.gross_pay, data.net_pay].filter((v) => v !== null && v !== undefined).length;
+  // Net above gross means the labels matched the wrong numbers somewhere.
+  const sane = coreFound === 2 && data.net_pay > 0 && data.net_pay <= data.gross_pay * 1.05;
+
+  return { data: data, confidence: { fieldsFound: fieldsFound, coreFound: coreFound, confident: coreFound === 2 && sane } };
+}
+
+const STEP_LABEL_CORE =
+  "(?:start(?:ing)?(?:\\s*rate)?|hire(?:\\s*in)?(?:\\s*rate)?|probation(?:ary)?|top(?:\\s*(?:rate|out))?|max(?:imum)?(?:\\s*rate)?|final(?:\\s*rate)?|step\\s*\\d+|level\\s*\\d+|tier\\s*\\d+|\\d+(?:\\.\\d+)?\\s*\\+?\\s*(?:mos?|months?|yrs?|years?|wks?|weeks?|days?))";
+const STEP_LABEL_ANCHORED = new RegExp("^\\s*" + STEP_LABEL_CORE + "\\b", "i");
+const STEP_LABEL_ANYWHERE = new RegExp("(?:^|[^a-z0-9])" + STEP_LABEL_CORE + "\\b", "i");
+
+function collectRateSteps(lines, labelRe) {
+  const steps = [];
+  const seen = {};
+  lines.forEach((line) => {
+    const m = labelRe.exec(line);
+    if (!m) return;
+    const rest = line.slice(m.index + m[0].length);
+    const rateMatch = rest.match(/\$\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*\.\d{1,2}/);
+    if (!rateMatch) return;
+    const rate = parseLocalNumber(rateMatch[0]);
+    // Plausible hourly rates only — this keeps years, counts, and percentages out.
+    if (rate === null || rate < 1 || rate > 500) return;
+    const cutAt = line.length - rest.length + rest.indexOf(rateMatch[0]);
+    const label = line.slice(0, cutAt).replace(/[\s:\-–—.]+$/, "").trim() || m[0].trim();
+    const key = label.toLowerCase() + "|" + rate;
+    if (seen[key]) return;
+    seen[key] = true;
+    steps.push({ label: label, rate: rate });
+  });
+  return steps;
+}
+
+// Returns { data, confidence } where data is exactly the shape
+// extractPayProfile() returns.
+function parseWageSheetTextLocally(text) {
+  const lines = toTextLines(text);
+
+  // Most wage sheets list each tenure step at the start of its own row; some
+  // prefix the row with the track name, so retry unanchored if the strict pass
+  // came up short.
+  let steps = collectRateSteps(lines, STEP_LABEL_ANCHORED);
+  if (steps.length < 2) {
+    const loose = collectRateSteps(lines, STEP_LABEL_ANYWHERE);
+    if (loose.length > steps.length) steps = loose;
+  }
+
+  let trackLabel = findLabeledValue(
+    lines,
+    ["job classification", "classification", "job title", "position", "pay track", "wage group", "pay grade", "job group", "track", "role"],
+    textIn
+  );
+  if (!trackLabel) {
+    // Fall back to a heading that names a job track. An effective date often
+    // rides along on that same line, so drop it before checking for numbers —
+    // any other digits mean the line is a rate row, not a heading.
+    const heading = lines
+      .map((l) =>
+        l
+          .replace(LOCAL_DATE_RE, " ")
+          .replace(/\s+/g, " ")
+          .replace(/[\s:\-–—]*\b(?:eff(?:ective)?\.?(?:\s*date)?|as of)\s*$/i, "")
+          .trim()
+      )
+      .find((l) => /team member|team leader|technician|operator|associate|maintenance|production|skilled|apprentice|journeyman/i.test(l) && !/\d/.test(l));
+    if (heading) trackLabel = heading.slice(0, 80);
+  }
+
+  const data = {
+    track_label: trackLabel,
+    effective_date: findLabeledValue(lines, ["effective date", "effective as of", "eff date", "effective", "in effect"], dateIn),
+    shift_premium: findLabeledValue(
+      lines,
+      ["shift premium", "shift differential", "shift diff", "off shift premium", "night premium", "night differential", "second shift", "third shift"],
+      premiumIn
+    ),
+    team_leader_premium: findLabeledValue(
+      lines,
+      ["team leader premium", "team lead premium", "group leader premium", "crew leader premium", "leader premium", "lead premium", "lead differential", "team leader", "team lead", "group leader"],
+      premiumIn
+    ),
+    steps: steps,
+  };
+
+  return {
+    data: data,
+    confidence: {
+      stepsFound: steps.length,
+      fieldsFound: ["track_label", "effective_date", "shift_premium", "team_leader_premium"].filter((k) => data[k] !== null && data[k] !== undefined).length,
+      confident: steps.length >= 2,
+    },
+  };
+}
+
+// Drives both the review form for locally parsed stubs and the conversion back
+// out of it, so the saved entry keeps exactly the schema the vision path returns.
+const LOCAL_STUB_FIELDS = [
+  { key: "pay_date", label: "Pay date", type: "text" },
+  { key: "gross_pay", label: "Gross pay", type: "number" },
+  { key: "federal_tax", label: "Federal tax", type: "number" },
+  { key: "state_tax", label: "State tax", type: "number" },
+  { key: "social_security", label: "Social Security", type: "number" },
+  { key: "medicare", label: "Medicare", type: "number" },
+  { key: "other_deductions_total", label: "Other deductions", type: "number" },
+  { key: "net_pay", label: "Net pay", type: "number" },
+  { key: "hours_worked", label: "Hours worked", type: "number" },
+  { key: "hourly_rate", label: "Hourly rate", type: "number" },
+];
+
 async function extractStubData(base64, mediaType, isPdf) {
   const contentBlock = isPdf
     ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
@@ -193,6 +515,19 @@ async function extractPayProfile(base64, mediaType, isPdf) {
   }
 }
 
+
+// Marks where a saved result came from, so it's visible later how often the
+// free local path is actually being used. Entries saved before this existed have
+// no source and show nothing.
+function SourceTag({ source }) {
+  if (source !== "local" && source !== "ai") return null;
+  const isLocal = source === "local";
+  return (
+    <span className={"pc-source-tag" + (isLocal ? " local" : " ai")} title={isLocal ? "Read from the PDF's text layer in your browser — no API call" : "Read by Claude's vision model"}>
+      {isLocal ? "parsed locally" : "AI-parsed"}
+    </span>
+  );
+}
 
 function StampBadge({ value, label, tone = "amber", spin }) {
   const color = TOKENS[tone] || TOKENS.amber;
@@ -307,6 +642,16 @@ function App() {
   const [profileUploading, setProfileUploading] = useState(false);
   const [profileUploadError, setProfileUploadError] = useState(null);
   const [profileUploadResult, setProfileUploadResult] = useState(null);
+
+  // Locally parsed results are held here for review first. Rule-based parsing is
+  // less reliable than the vision model, so nothing is saved until it's confirmed.
+  // The originating file is kept alongside so "read it with AI instead" can rerun
+  // the vision path without a second upload.
+  const [pendingStub, setPendingStub] = useState(null);
+  const [pendingStubFile, setPendingStubFile] = useState(null);
+  const [pendingProfile, setPendingProfile] = useState(null);
+  const [pendingProfileFile, setPendingProfileFile] = useState(null);
+  const [ladderSource, setLadderSource] = useState(null);
   const profileFileInputRef = useRef(null);
 
   const [perDiemRate, setPerDiemRate] = useState("");
@@ -394,6 +739,7 @@ function App() {
           const parsed = JSON.parse(result.value);
           if (parsed.steps) setLadderSteps(parsed.steps);
           if (parsed.currentStepId !== undefined) setCurrentStepId(parsed.currentStepId);
+          if (parsed.source !== undefined) setLadderSource(parsed.source);
         }
       } catch (e) {
         // no saved ladder yet, defaults stand
@@ -403,11 +749,16 @@ function App() {
     })();
   }, []);
 
-  async function persistLadder(steps, currentId) {
+  // `source` records where the steps came from ("local", "ai", or null for
+  // hand-built/example ladders). Callers that are only editing an existing
+  // ladder leave it out, which keeps whatever source is already recorded.
+  async function persistLadder(steps, currentId, source) {
+    const nextSource = source === undefined ? ladderSource : source;
     setLadderSteps(steps);
     setCurrentStepId(currentId);
+    setLadderSource(nextSource);
     try {
-      await window.storage.set("pay-ladder", JSON.stringify({ steps, currentStepId: currentId }), false);
+      await window.storage.set("pay-ladder", JSON.stringify({ steps, currentStepId: currentId, source: nextSource }), false);
     } catch (e) {
       console.error("Could not save pay ladder", e);
     }
@@ -429,43 +780,119 @@ function App() {
     persistLadder(next, currentStepId === id ? null : currentStepId);
   }
 
+  // Applies an extracted pay profile to the ladder and premiums. Shared by the
+  // vision path (saves straight away) and the local path (saves on confirm).
+  function applyPayProfile(parsed, source) {
+    const steps = (parsed.steps || [])
+      .filter((s) => s && s.rate !== null && s.rate !== undefined && s.rate !== "")
+      .map((s, i) => ({ id: i + 1, label: s.label || "Step " + (i + 1), rate: String(s.rate) }));
+    if (steps.length) {
+      persistLadder(steps, null, source);
+    }
+    const nextShiftPremium = parsed.shift_premium !== null && parsed.shift_premium !== undefined && parsed.shift_premium !== "" ? String(parsed.shift_premium) : shiftPremium;
+    const nextTLPremium = parsed.team_leader_premium !== null && parsed.team_leader_premium !== undefined && parsed.team_leader_premium !== "" ? String(parsed.team_leader_premium) : teamLeaderPremium;
+    persistPremiums(nextShiftPremium, nextTLPremium, isTeamLeader);
+    setProfileUploadResult({
+      trackLabel: parsed.track_label || null,
+      effectiveDate: parsed.effective_date || null,
+      stepsCount: steps.length,
+      shiftPremium: nextShiftPremium,
+      teamLeaderPremium: nextTLPremium,
+      source: source,
+    });
+  }
+
   async function handleProfileFile(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    await readProfileFile(file, false);
+    if (profileFileInputRef.current) profileFileInputRef.current.value = "";
+  }
+
+  // `forceVision` skips the local attempt — that's the "read it with AI instead"
+  // button on the review form.
+  async function readProfileFile(file, forceVision) {
     setProfileUploading(true);
     setProfileUploadError(null);
     setProfileUploadResult(null);
+    setPendingProfile(null);
     try {
       const isPdf = file.type === "application/pdf";
+
+      // A PDF exported from a payroll system has a text layer, which can be read
+      // here for free. Photos, scans, and anything the local parser isn't sure
+      // about fall through to the vision call below.
+      if (isPdf && !forceVision) {
+        const text = await extractPdfTextLayer(file);
+        if (text) {
+          const local = parseWageSheetTextLocally(text);
+          if (local.confidence.confident) {
+            setPendingProfileFile(file);
+            setPendingProfile({
+              track_label: local.data.track_label || "",
+              effective_date: local.data.effective_date || "",
+              shift_premium: local.data.shift_premium === null ? "" : String(local.data.shift_premium),
+              team_leader_premium: local.data.team_leader_premium === null ? "" : String(local.data.team_leader_premium),
+              steps: local.data.steps.map((s) => ({ label: s.label, rate: String(s.rate) })),
+            });
+            return;
+          }
+        }
+      }
+
       const base64 = await fileToBase64(file);
       const parsed = await extractPayProfile(base64, file.type, isPdf);
-      const steps = (parsed.steps || [])
-        .filter((s) => s && s.rate !== null && s.rate !== undefined)
-        .map((s, i) => ({ id: i + 1, label: s.label || "Step " + (i + 1), rate: String(s.rate) }));
-      if (steps.length) {
-        persistLadder(steps, null);
-      }
-      const nextShiftPremium = parsed.shift_premium !== null && parsed.shift_premium !== undefined ? String(parsed.shift_premium) : shiftPremium;
-      const nextTLPremium = parsed.team_leader_premium !== null && parsed.team_leader_premium !== undefined ? String(parsed.team_leader_premium) : teamLeaderPremium;
-      persistPremiums(nextShiftPremium, nextTLPremium, isTeamLeader);
-      setProfileUploadResult({
-        trackLabel: parsed.track_label || null,
-        effectiveDate: parsed.effective_date || null,
-        stepsCount: steps.length,
-        shiftPremium: nextShiftPremium,
-        teamLeaderPremium: nextTLPremium,
-      });
+      applyPayProfile(parsed, "ai");
+      setPendingProfileFile(null);
     } catch (err) {
       setProfileUploadError(err.message || "Couldn't read that document. Try a clearer image or enter your rates manually below.");
     } finally {
       setProfileUploading(false);
-      if (profileFileInputRef.current) profileFileInputRef.current.value = "";
     }
+  }
+
+  function updatePendingProfile(field, value) {
+    setPendingProfile((prev) => (prev ? { ...prev, [field]: value } : prev));
+  }
+
+  function updatePendingProfileStep(index, field, value) {
+    setPendingProfile((prev) => {
+      if (!prev) return prev;
+      const steps = prev.steps.map((s, i) => (i === index ? { ...s, [field]: value } : s));
+      return { ...prev, steps };
+    });
+  }
+
+  function removePendingProfileStep(index) {
+    setPendingProfile((prev) => (prev ? { ...prev, steps: prev.steps.filter((s, i) => i !== index) } : prev));
+  }
+
+  function confirmPendingProfile() {
+    if (!pendingProfile) return;
+    applyPayProfile(
+      {
+        track_label: pendingProfile.track_label.trim() || null,
+        effective_date: pendingProfile.effective_date.trim() || null,
+        shift_premium: pendingProfile.shift_premium === "" ? null : Number(pendingProfile.shift_premium),
+        team_leader_premium: pendingProfile.team_leader_premium === "" ? null : Number(pendingProfile.team_leader_premium),
+        steps: pendingProfile.steps
+          .filter((s) => s.rate !== "" && !isNaN(Number(s.rate)))
+          .map((s) => ({ label: s.label, rate: Number(s.rate) })),
+      },
+      "local"
+    );
+    setPendingProfile(null);
+    setPendingProfileFile(null);
+  }
+
+  function discardPendingProfile() {
+    setPendingProfile(null);
+    setPendingProfileFile(null);
   }
 
   function loadScaleIntoLadder(track) {
     const steps = PAY_SCALE[track].steps.map((s, i) => ({ id: i + 1, label: s.label, rate: String(s.rate) }));
-    persistLadder(steps, null);
+    persistLadder(steps, null, null);
     setShiftPremium(String(PAY_SCALE[track].shiftPremium.toFixed(2)));
     setTeamLeaderPremium(String(PAY_SCALE[track].teamLeaderPremium.toFixed(2)));
     persistPremiums(String(PAY_SCALE[track].shiftPremium.toFixed(2)), String(PAY_SCALE[track].teamLeaderPremium.toFixed(2)), isTeamLeader);
@@ -812,23 +1239,81 @@ function App() {
   async function handleFile(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
+    await readStubFile(file, false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  // `forceVision` skips the local attempt — that's the "read it with AI instead"
+  // button on the review form.
+  async function readStubFile(file, forceVision) {
     setUploading(true);
     setUploadError(null);
+    setPendingStub(null);
     try {
       const isPdf = file.type === "application/pdf";
+
+      // A PDF exported from a payroll portal carries a text layer, so it can be
+      // read here for free. Photos, scans, and low-confidence local parses fall
+      // through to the vision call below.
+      if (isPdf && !forceVision) {
+        const text = await extractPdfTextLayer(file);
+        if (text) {
+          const local = parseStubTextLocally(text);
+          if (local.confidence.confident) {
+            const draft = {};
+            LOCAL_STUB_FIELDS.forEach((f) => {
+              const v = local.data[f.key];
+              draft[f.key] = v === null || v === undefined ? "" : String(v);
+            });
+            setPendingStubFile(file);
+            setPendingStub(draft);
+            return;
+          }
+        }
+      }
+
       const base64 = await fileToBase64(file);
       const parsed = await extractStubData(base64, file.type, isPdf);
-      const entry = { id: Date.now(), uploadedAt: new Date().toISOString(), ...parsed };
+      const entry = { id: Date.now(), uploadedAt: new Date().toISOString(), ...parsed, source: "ai" };
       const next = [entry, ...stubs].slice(0, 30);
       await persistStubs(next);
+      setPendingStubFile(null);
       setJustStamped(true);
       setTimeout(() => setJustStamped(false), 900);
     } catch (err) {
       setUploadError(err.message || "Couldn't read that stub. Try a clearer image or paste the numbers manually.");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  }
+
+  function updatePendingStub(key, value) {
+    setPendingStub((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  async function confirmPendingStub() {
+    if (!pendingStub) return;
+    const entry = { id: Date.now(), uploadedAt: new Date().toISOString(), source: "local" };
+    LOCAL_STUB_FIELDS.forEach((f) => {
+      const raw = String(pendingStub[f.key] === undefined ? "" : pendingStub[f.key]).trim();
+      if (raw === "") {
+        entry[f.key] = null;
+      } else if (f.type === "number") {
+        entry[f.key] = isNaN(Number(raw)) ? null : Number(raw);
+      } else {
+        entry[f.key] = raw;
+      }
+    });
+    setPendingStub(null);
+    setPendingStubFile(null);
+    await persistStubs([entry, ...stubs].slice(0, 30));
+    setJustStamped(true);
+    setTimeout(() => setJustStamped(false), 900);
+  }
+
+  function discardPendingStub() {
+    setPendingStub(null);
+    setPendingStubFile(null);
   }
 
   async function removeStub(id) {
@@ -1299,6 +1784,30 @@ function App() {
           text-decoration: underline; padding: 0;
         }
         .pc-error { color: ${TOKENS.rust}; font-size: 13px; margin-top: 10px; }
+        .pc-source-tag {
+          display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+          letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+          padding: 2px 6px; border-radius: 3px; border: 1px solid ${TOKENS.panelBorder};
+          color: ${TOKENS.textDim}; vertical-align: middle;
+        }
+        .pc-source-tag.local { color: ${TOKENS.green}; border-color: ${TOKENS.green}; opacity: 0.85; }
+        .pc-source-tag.ai { color: ${TOKENS.amber}; border-color: ${TOKENS.amber}; opacity: 0.75; }
+        .pc-review {
+          margin-top: 14px; padding: 14px; border-radius: 6px;
+          background: ${TOKENS.panel2}; border: 1px solid ${TOKENS.green};
+        }
+        .pc-review-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .pc-review-title {
+          font-family: 'Big Shoulders Display', sans-serif; font-weight: 600; font-size: 15px;
+          text-transform: uppercase; letter-spacing: 0.02em; color: ${TOKENS.text};
+        }
+        .pc-review-desc { font-size: 12px; color: ${TOKENS.textDim}; margin: 0 0 12px; line-height: 1.5; }
+        .pc-review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 12px; }
+        .pc-review-steps-title {
+          font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+          text-transform: uppercase; color: ${TOKENS.textDim}; margin: 4px 0 8px;
+        }
+        .pc-review-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
         .pc-calc-btn {
           background: ${TOKENS.amber};
           color: ${TOKENS.bg};
@@ -1376,6 +1885,43 @@ function App() {
           </label>
           {uploadError && <div className="pc-error">{uploadError}</div>}
 
+          {pendingStub && (
+            <div className="pc-review">
+              <div className="pc-review-head">
+                <span className="pc-review-title">Check these before saving</span>
+                <SourceTag source="local" />
+              </div>
+              <p className="pc-review-desc">
+                Read straight out of the PDF in your browser &mdash; no upload, no API call. Rule-based reading is less
+                reliable than the AI, so give these a look and fix anything that's off.
+              </p>
+              <div className="pc-review-grid">
+                {LOCAL_STUB_FIELDS.map((f) => (
+                  <div className="pc-field" key={f.key}>
+                    <label htmlFor={"pending-" + f.key}>{f.label}</label>
+                    <input
+                      id={"pending-" + f.key}
+                      type={f.type === "number" ? "number" : "text"}
+                      step={f.type === "number" ? "0.01" : undefined}
+                      value={pendingStub[f.key]}
+                      placeholder={f.type === "number" ? "—" : "MM/DD/YYYY"}
+                      onChange={(e) => updatePendingStub(f.key, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="pc-review-actions">
+                <button className="pc-calc-btn" onClick={confirmPendingStub}>Save this stub</button>
+                {pendingStubFile && (
+                  <button className="pc-btn-link" onClick={() => readStubFile(pendingStubFile, true)} disabled={uploading}>
+                    Read it with AI instead
+                  </button>
+                )}
+                <button className="pc-btn-link" onClick={discardPendingStub}>Discard</button>
+              </div>
+            </div>
+          )}
+
           {stubs.length > 0 && stubs[0].net_pay && stubs[0].gross_pay && (
             <div className="pc-results">
               <StampBadge value={fmtPct(100 - (1 - stubs[0].net_pay / stubs[0].gross_pay) * 100)} label="kept" tone="green" spin={justStamped} />
@@ -1399,6 +1945,7 @@ function App() {
                   <div className="pc-chip" key={s.id}>
                     <span>{s.pay_date || new Date(s.uploadedAt).toLocaleDateString()}</span>
                     <span style={{ color: TOKENS.green }}>{fmtMoney(s.net_pay)}</span>
+                    <SourceTag source={s.source} />
                     <button className="remove" onClick={() => removeStub(s.id)} aria-label="Remove this stub">&times;</button>
                   </div>
                 ))}
@@ -1692,8 +2239,60 @@ function App() {
             </div>
           </label>
           {profileUploadError && <div className="pc-error">{profileUploadError}</div>}
+
+          {pendingProfile && (
+            <div className="pc-review">
+              <div className="pc-review-head">
+                <span className="pc-review-title">Check these before saving</span>
+                <SourceTag source="local" />
+              </div>
+              <p className="pc-review-desc">
+                Read straight out of the PDF in your browser &mdash; no upload, no API call. Rule-based reading is less
+                reliable than the AI, so give these a look and fix anything that's off.
+              </p>
+              <div className="pc-review-grid">
+                <div className="pc-field">
+                  <label htmlFor="pending-track">Track label</label>
+                  <input id="pending-track" type="text" value={pendingProfile.track_label} onChange={(e) => updatePendingProfile("track_label", e.target.value)} />
+                </div>
+                <div className="pc-field">
+                  <label htmlFor="pending-eff">Effective date</label>
+                  <input id="pending-eff" type="text" value={pendingProfile.effective_date} onChange={(e) => updatePendingProfile("effective_date", e.target.value)} />
+                </div>
+                <div className="pc-field">
+                  <label htmlFor="pending-shift">Shift premium ($/hr)</label>
+                  <input id="pending-shift" type="number" step="0.01" value={pendingProfile.shift_premium} onChange={(e) => updatePendingProfile("shift_premium", e.target.value)} />
+                </div>
+                <div className="pc-field">
+                  <label htmlFor="pending-tl">Team leader premium ($/hr)</label>
+                  <input id="pending-tl" type="number" step="0.01" value={pendingProfile.team_leader_premium} onChange={(e) => updatePendingProfile("team_leader_premium", e.target.value)} />
+                </div>
+              </div>
+              <div className="pc-review-steps-title">Rate steps ({pendingProfile.steps.length})</div>
+              <div className="pc-ladder-list">
+                {pendingProfile.steps.map((s, i) => (
+                  <div className="pc-ladder-row" key={i}>
+                    <input className="pc-ladder-label" type="text" value={s.label} onChange={(e) => updatePendingProfileStep(i, "label", e.target.value)} />
+                    <input className="pc-ladder-rate" type="number" min="0" step="0.01" value={s.rate} onChange={(e) => updatePendingProfileStep(i, "rate", e.target.value)} />
+                    <button className="pc-ladder-remove" onClick={() => removePendingProfileStep(i)} aria-label={"Remove " + s.label}>&times;</button>
+                  </div>
+                ))}
+              </div>
+              <div className="pc-review-actions">
+                <button className="pc-calc-btn" onClick={confirmPendingProfile}>Save this profile</button>
+                {pendingProfileFile && (
+                  <button className="pc-btn-link" onClick={() => readProfileFile(pendingProfileFile, true)} disabled={profileUploading}>
+                    Read it with AI instead
+                  </button>
+                )}
+                <button className="pc-btn-link" onClick={discardPendingProfile}>Discard</button>
+              </div>
+            </div>
+          )}
+
           {profileUploadResult && (
             <p className="pc-breakdown-note">
+              <SourceTag source={profileUploadResult.source} />{" "}
               Loaded{profileUploadResult.trackLabel ? " \u201c" + profileUploadResult.trackLabel + "\u201d" : ""}
               {profileUploadResult.effectiveDate ? " (effective " + profileUploadResult.effectiveDate + ")" : ""}
               {profileUploadResult.stepsCount ? " \u2014 " + profileUploadResult.stepsCount + " rate steps" : ""},
@@ -1703,7 +2302,7 @@ function App() {
 
           <div className="pc-divider" />
 
-          <h2 className="pc-panel-title">Rate Ladder</h2>
+          <h2 className="pc-panel-title">Rate Ladder <SourceTag source={ladderSource} /></h2>
           <p className="pc-panel-desc">From your uploaded profile, or build/edit it by hand below. Mark where you are now to see what the next step is worth.</p>
 
           <div className="pc-scale-load">

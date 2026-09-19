@@ -13,6 +13,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <!-- Babel standalone lets the browser transform JSX at runtime, so no bundler/build step is required -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+  <!-- pdf.js reads the text layer out of digitally-exported PDFs so those can be parsed
+       locally, with no API call. 3.x is the last line that ships a plain (non-module)
+       UMD build, which is what a no-build-step page like this one needs. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // pdf.js will not fetch its worker unless workerSrc is set explicitly — without
+    // this, getTextContent() hangs or fails silently.
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>
