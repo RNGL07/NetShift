@@ -40,7 +40,10 @@ begin
   join pg_attribute a on a.attrelid = c.oid and a.attname = 'user_id' and a.attnum > 0
   where n.nspname = 'public'
     and c.relkind = 'r'
-    and c.relname <> 'stripe_events' -- service-role only, deliberately policy-free
+    -- Deliberately policy-free: service-role only. A user must not be able to
+    -- read the Stripe event log or reset their own rate-limit bucket, so these
+    -- carry no policy and no grant at all rather than a restrictive one.
+    and c.relname not in ('stripe_events', 'rate_limit_buckets')
     and not exists (
       select 1 from pg_policy p where p.polrelid = c.oid
     );

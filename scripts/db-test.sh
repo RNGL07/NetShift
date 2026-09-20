@@ -91,6 +91,14 @@ if ! echo "$psql_out" | grep -q 'ALL RLS ASSERTIONS PASSED'; then
   exit 1
 fi
 
+echo "==> Running webhook idempotency assertions"
+webhook_out=$("${PSQL[@]}" -f supabase/tests/stripe_events.sql 2>&1)
+echo "$webhook_out" | sed 's/^psql:[^ ]*: NOTICE:  /    /'
+if ! echo "$webhook_out" | grep -q 'ALL WEBHOOK ASSERTIONS PASSED'; then
+  echo "Webhook assertions did not complete." >&2
+  exit 1
+fi
+
 echo "==> Verifying every user-owned table has RLS enabled"
 "${PSQL[@]}" -v ON_ERROR_STOP=1 -f supabase/tests/rls_coverage.sql
 
