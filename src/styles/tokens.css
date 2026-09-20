@@ -1,0 +1,80 @@
+/**
+ * Design tokens.
+ *
+ * The palette is carried over from the prototype — dark, industrial, amber on
+ * near-black — because it is NetShift's identity and users recognise it. What
+ * is new is that every value is a token, so contrast and spacing are decided
+ * once rather than re-typed at each call site.
+ */
+
+:root {
+  /* Surfaces, darkest to lightest */
+  --bg: #14171a;
+  --panel: #1c2024;
+  --panel-2: #22262b;
+  --panel-3: #282d33;
+  --border: #2a2f35;
+  --border-strong: #3a4148;
+
+  /* Text. --text-dim sits at ~5.1:1 on --panel, above the 4.5:1 minimum. */
+  --text: #ece9e2;
+  --text-dim: #9aa1a9;
+  --text-faint: #6f767d;
+
+  /* Accents */
+  --amber: #f2a93b;
+  --amber-dim: #8a6222;
+  --green: #5fbf83;
+  --green-dim: #2f5f43;
+  --rust: #c9573b;
+  --rust-dim: #6b2f20;
+  --blue: #6ba4d8;
+
+  /* Semantic */
+  --success: var(--green);
+  --warning: var(--amber);
+  --danger: var(--rust);
+  --info: var(--blue);
+
+  /* Type */
+  --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 10px;
+
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  /* Layout */
+  --content-max: 1100px;
+  --panel-max: 680px;
+
+  /* Touch targets: 44px is the smallest reliably tappable size on a phone,
+     which matters for an app used on a plant floor with gloves on. */
+  --tap-min: 44px;
+}
+
+/* Honour a user's reduced-motion preference rather than animating regardless. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

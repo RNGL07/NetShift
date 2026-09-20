@@ -1,0 +1,48 @@
+.ns-plan__periods {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-3);
+  /* Snap so a thumb-flick lands on a period rather than between two. */
+  scroll-snap-type: x mandatory;
+}
+.ns-plan__period {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  min-width: 118px;
+  min-height: var(--tap-min);
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-dim);
+}
+.ns-plan__period--active {
+  border-color: var(--amber);
+  background: var(--panel-3);
+  color: var(--text);
+}
+.ns-plan__period-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ns-plan__period-date {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ns-plan__add {
+  padding: var(--space-4);
+  background: var(--panel-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-4);
+}

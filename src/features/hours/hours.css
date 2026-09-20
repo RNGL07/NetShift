@@ -1,0 +1,86 @@
+.ns-hours__week {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 520px) {
+  .ns-hours__week {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 900px) {
+  .ns-hours__week {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ns-hours__day {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+.ns-hours__day--today {
+  border-color: var(--amber);
+}
+.ns-hours__day--over {
+  border-color: var(--amber-dim);
+}
+
+.ns-hours__day-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+.ns-hours__day-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.ns-hours__day .ns-field {
+  margin-bottom: var(--space-2);
+}
+
+.ns-hours__toggle {
+  background: none;
+  border: none;
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  padding: var(--space-2) 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  min-height: 32px;
+}
+
+.ns-hours__times {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.ns-hours__computed {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--green);
+  margin: var(--space-2) 0;
+}
+.ns-hours__day-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ns-paychecks__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+}

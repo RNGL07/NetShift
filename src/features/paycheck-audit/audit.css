@@ -1,0 +1,66 @@
+.ns-audit__lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.ns-audit__line {
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  border-left-width: 3px;
+}
+.ns-audit__line--match {
+  border-left-color: var(--green-dim);
+}
+.ns-audit__line--minor {
+  border-left-color: var(--border-strong);
+}
+.ns-audit__line--review {
+  border-left-color: var(--amber);
+}
+.ns-audit__line--missing {
+  border-left-color: var(--border);
+  opacity: 0.75;
+}
+
+.ns-audit__line-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2);
+}
+.ns-audit__line-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.ns-audit__line-figures {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: var(--space-2);
+}
+.ns-audit__line-figures strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+.ns-audit__line-diff {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.ns-audit__line-message {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 70ch;
+}
