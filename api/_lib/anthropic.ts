@@ -10,8 +10,8 @@
  * Nothing here logs document bytes or extracted financial values.
  */
 
-import { requireEnv } from './env';
-import { ApiError, logServerError } from './http';
+import { requireEnv } from './env.js';
+import { ApiError, logServerError } from './http.js';
 
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';

@@ -7,7 +7,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createRequest, createResponse, errorCode, stubEnv } from './harness';
+import { createRequest, createResponse, errorCode, stubEnv } from './harness.js';
 
 const getUser = vi.fn();
 const subscriptionRow = vi.fn();

@@ -12,14 +12,14 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { aiModels } from '../_lib/env';
-import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit';
-import { claimAiUsage, getEntitlement, recordAiUsage } from '../_lib/entitlements';
-import { callAnthropic, parseJsonResponse } from '../_lib/anthropic';
-import { documentContentBlock, validateDocument } from '../_lib/documents';
-import { validatePayStub } from '../_lib/validation';
+import { requireUser } from '../_lib/auth.js';
+import { aiModels } from '../_lib/env.js';
+import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
+import { claimAiUsage, getEntitlement, recordAiUsage } from '../_lib/entitlements.js';
+import { callAnthropic, parseJsonResponse } from '../_lib/anthropic.js';
+import { documentContentBlock, validateDocument } from '../_lib/documents.js';
+import { validatePayStub } from '../_lib/validation.js';
 
 const SYSTEM_PROMPT = [
   'You extract figures from a pay stub and return JSON only.',

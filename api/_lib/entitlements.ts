@@ -19,10 +19,10 @@ import {
   type FeatureKey,
   type PlanTier,
   type SubscriptionStatus,
-} from '../../src/config/plans';
-import { aiLimitEnv } from './env';
-import { ApiError, logServerError } from './http';
-import { serviceClient } from './supabase';
+} from '../../src/config/plans.js';
+import { aiLimitEnv } from './env.js';
+import { ApiError, logServerError } from './http.js';
+import { serviceClient } from './supabase.js';
 
 interface SubscriptionRow {
   status: SubscriptionStatus | null;

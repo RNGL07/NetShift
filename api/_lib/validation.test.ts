@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateMarketReport, validatePayStub, validateWageSheet } from './validation';
+import { validateMarketReport, validatePayStub, validateWageSheet } from './validation.js';
 
 describe('validatePayStub — coercion', () => {
   it('accepts a clean extraction unchanged', () => {

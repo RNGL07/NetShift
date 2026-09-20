@@ -13,7 +13,7 @@
 import { createHmac } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createResponse, stubEnv } from './harness';
+import { createResponse, stubEnv } from './harness.js';
 
 const WEBHOOK_SECRET = 'whsec_test_secret';
 

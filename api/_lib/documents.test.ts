@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { ACCEPTED_MEDIA_TYPES, validateDocument } from './documents';
-import { ApiError } from './http';
+import { ACCEPTED_MEDIA_TYPES, validateDocument } from './documents.js';
+import { ApiError } from './http.js';
 
 /** Builds a base64 payload whose leading bytes match a real file signature. */
 function fileOf(magic: number[], totalBytes = 64): string {

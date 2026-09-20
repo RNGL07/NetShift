@@ -9,10 +9,10 @@
  */
 
 import Stripe from 'stripe';
-import { requireEnv, readEnv } from './env';
-import { logServerError } from './http';
-import { serviceClient } from './supabase';
-import { resolveEntitlement, type SubscriptionStatus } from '../../src/config/plans';
+import { requireEnv, readEnv } from './env.js';
+import { logServerError } from './http.js';
+import { serviceClient } from './supabase.js';
+import { resolveEntitlement, type SubscriptionStatus } from '../../src/config/plans.js';
 
 let cachedStripe: Stripe | null = null;
 
