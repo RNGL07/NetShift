@@ -13,13 +13,13 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { aiModels } from '../_lib/env';
-import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit';
-import { claimAiUsage, recordAiUsage, requireFeature } from '../_lib/entitlements';
-import { callAnthropic } from '../_lib/anthropic';
-import { serviceClient } from '../_lib/supabase';
+import { requireUser } from '../_lib/auth.js';
+import { aiModels } from '../_lib/env.js';
+import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
+import { claimAiUsage, recordAiUsage, requireFeature } from '../_lib/entitlements.js';
+import { callAnthropic } from '../_lib/anthropic.js';
+import { serviceClient } from '../_lib/supabase.js';
 
 const SYSTEM_PROMPT = [
   'You explain one paycheck to the shift worker who earned it, in plain English.',

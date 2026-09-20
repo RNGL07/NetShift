@@ -7,10 +7,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { getEntitlement, readUsage } from '../_lib/entitlements';
-import { serviceClient } from '../_lib/supabase';
+import { requireUser } from '../_lib/auth.js';
+import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { getEntitlement, readUsage } from '../_lib/entitlements.js';
+import { serviceClient } from '../_lib/supabase.js';
 
 interface Row {
   stripe_price_id: string | null;

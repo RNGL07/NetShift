@@ -13,10 +13,10 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from './_lib/auth';
-import { ApiError, logServerError, methodGuard, ok, withErrorHandling } from './_lib/http';
-import { PRICES_RATE_LIMIT, consumeRateLimit } from './_lib/rateLimit';
-import { serviceClient } from './_lib/supabase';
+import { requireUser } from './_lib/auth.js';
+import { ApiError, logServerError, methodGuard, ok, withErrorHandling } from './_lib/http.js';
+import { PRICES_RATE_LIMIT, consumeRateLimit } from './_lib/rateLimit.js';
+import { serviceClient } from './_lib/supabase.js';
 
 /** How long a cached price is served without re-fetching. */
 const CACHE_TTL_MS = 15 * 60 * 1000;

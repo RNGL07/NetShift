@@ -8,8 +8,8 @@
  * actually accept.
  */
 
-import { maxDocumentBytes } from './env';
-import { ApiError } from './http';
+import { maxDocumentBytes } from './env.js';
+import { ApiError } from './http.js';
 
 export type DocumentMediaType = 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp';
 

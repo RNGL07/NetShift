@@ -18,10 +18,10 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type Stripe from 'stripe';
-import { requireEnv } from '../_lib/env';
-import { logServerError } from '../_lib/http';
-import { serviceClient } from '../_lib/supabase';
-import { resolveUserId, stripeClient, syncSubscription } from '../_lib/stripe';
+import { requireEnv } from '../_lib/env.js';
+import { logServerError } from '../_lib/http.js';
+import { serviceClient } from '../_lib/supabase.js';
+import { resolveUserId, stripeClient, syncSubscription } from '../_lib/stripe.js';
 
 // Stripe signs the raw bytes; the body parser must be off for that to work.
 export const config = { api: { bodyParser: false } };

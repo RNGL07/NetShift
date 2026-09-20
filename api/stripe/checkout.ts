@@ -8,12 +8,12 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { appUrl } from '../_lib/env';
-import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { BILLING_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit';
-import { getEntitlement } from '../_lib/entitlements';
-import { ensureCustomer, proPriceId, stripeClient, trialDays } from '../_lib/stripe';
+import { requireUser } from '../_lib/auth.js';
+import { appUrl } from '../_lib/env.js';
+import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { BILLING_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
+import { getEntitlement } from '../_lib/entitlements.js';
+import { ensureCustomer, proPriceId, stripeClient, trialDays } from '../_lib/stripe.js';
 
 export default withErrorHandling(
   'stripe.checkout',

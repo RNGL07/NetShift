@@ -12,11 +12,11 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { serviceClient } from '../_lib/supabase';
-import { stripeClient } from '../_lib/stripe';
-import { logServerError } from '../_lib/http';
+import { requireUser } from '../_lib/auth.js';
+import { ApiError, methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { serviceClient } from '../_lib/supabase.js';
+import { stripeClient } from '../_lib/stripe.js';
+import { logServerError } from '../_lib/http.js';
 
 export default withErrorHandling(
   'account.delete',

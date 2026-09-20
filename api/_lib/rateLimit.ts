@@ -14,8 +14,8 @@
  * realistic way to lock out a whole shift.
  */
 
-import { ApiError, logServerError } from './http';
-import { serviceClient } from './supabase';
+import { ApiError, logServerError } from './http.js';
+import { serviceClient } from './supabase.js';
 
 export interface RateLimitRule {
   /** A name for the bucket, e.g. 'ai'. */

@@ -8,8 +8,8 @@
  */
 
 import type { VercelRequest } from '@vercel/node';
-import { ApiError } from './http';
-import { serviceClient, userClient } from './supabase';
+import { ApiError } from './http.js';
+import { serviceClient, userClient } from './supabase.js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface AuthedUser {

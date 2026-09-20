@@ -13,14 +13,14 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireUser } from '../_lib/auth';
-import { aiModels } from '../_lib/env';
-import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http';
-import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit';
-import { claimAiUsage, recordAiUsage, requireFeature } from '../_lib/entitlements';
-import { callAnthropic, parseJsonResponse } from '../_lib/anthropic';
-import { validateMarketReport } from '../_lib/validation';
-import { serviceClient } from '../_lib/supabase';
+import { requireUser } from '../_lib/auth.js';
+import { aiModels } from '../_lib/env.js';
+import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
+import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
+import { claimAiUsage, recordAiUsage, requireFeature } from '../_lib/entitlements.js';
+import { callAnthropic, parseJsonResponse } from '../_lib/anthropic.js';
+import { validateMarketReport } from '../_lib/validation.js';
+import { serviceClient } from '../_lib/supabase.js';
 
 const DISCLAIMER =
   'Educational information only. This is not investment advice and not a recommendation to buy or sell anything.';
