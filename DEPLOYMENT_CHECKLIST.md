@@ -1,27 +1,41 @@
 # NetShift production deployment checklist
 
-Base commit: `929829a` (main). Apply `netshift-critical-fixes.patch` first — it
-contains two deployment-blocking fixes.
+Current `main`: `558df67`. The code fixes are merged and deployed to Vercel.
+Everything below is configuration that has to be done by hand, in order.
 
 ---
 
-## 0. Apply the critical fixes (do this first)
+## 0. Apply the database migrations (do this first)
+
+The code is deployed; the schema is not. Migrations are **not** applied by the
+Vercel build — they are a separate, manual step against the production
+Supabase project.
 
 ```bash
-git checkout main && git pull
-git checkout -b fix/esm-guard-and-user-backfill
-git am netshift-critical-fixes.patch
-npm ci && npm run verify && npm run db:test
-git push -u origin fix/esm-guard-and-user-backfill
-# open PR, merge to main
+supabase link --project-ref <your-project-ref>
+supabase db push
 ```
 
-**Why this is not optional:** migration `0013` backfills `profiles` and
-`subscriptions` rows for users who existed before the schema change. Without
-it, the legacy-import flow cannot record that it ran, so the import prompt
-returns on every load and pay stubs can be imported repeatedly — duplicating
-financial records that then corrupt the audit, the buffer recommendation, and
-the learned deduction rate.
+Then confirm all fourteen migrations are recorded:
+
+```sql
+select version from supabase_migrations.schema_migrations order by version;
+-- the last one must be 20260101001300 (backfill_existing_users)
+```
+
+**Why `0013` is not optional:** it backfills `profiles` and `subscriptions`
+rows for users who existed before the schema change. `handle_new_user()` fires
+`after insert on auth.users`, so it never ran for them. Without the backfill,
+the legacy-import flow cannot record that it ran — the completion write is an
+`update public.profiles ... where id = <user id>`, which matches zero rows, and
+the prompt's own `maybeSingle()` read returns null and defaults back to
+`pending` —
+so the import prompt returns on every load and pay stubs can be imported
+repeatedly, duplicating financial records that then corrupt the audit, the
+buffer recommendation, and the learned deduction rate.
+
+Until this is applied, **do not sign in with an account that existed before
+the restructure.**
 
 ---
 
@@ -157,13 +171,48 @@ Repeat unauthenticated — expect **401**.
 
 ## 5. Known gaps to watch for (not yet verified in production)
 
-These passed locally but have never run on Vercel:
+The NodeNext typecheck now runs as part of the Vercel build and passed on
+both the preview and the production deployment of `558df67`, so the ESM
+extension class of error is ruled out at build time. The following are still
+unverified, because nothing has issued a real request against the deployed
+runtime:
 
-- The `/api/*` functions have only been exercised by unit tests and the new
-  NodeNext typecheck — not by a real request against the deployed runtime.
+- The `/api/*` functions have only been exercised by unit tests. Build success
+  proves they compile, not that they respond.
 - `pdfjs-dist` worker loading in production (local PDF parsing) is untested
   against Vercel's static asset serving.
 - Stripe webhook signature verification depends on `bodyParser: false` being
   honoured by the deployed runtime.
 
 Test 16 and test 11 cover the last two; test 10 covers the first.
+
+---
+
+## 6. Defect log
+
+Record anything found during the section 4 smoke tests here, one row per
+defect, so triage does not depend on memory.
+
+| #   | Severity | Area | Repro | Expected | Actual | Blocking? |
+| --- | -------- | ---- | ----- | -------- | ------ | --------- |
+
+Severity: **S1** data loss, cross-user access, broken auth, broken billing, or
+a core workflow that cannot be completed. **S2** a feature is wrong but usable.
+**S3** usability or cosmetic. Only S1 blocks use of the app.
+
+### Open items carried in from development
+
+These are known and deliberately not fixed; they are not blockers.
+
+- **S3 — wage-sheet parsing is heuristic.** The local parser handles row-wise
+  layouts and the column-header/rate-row tabular layout. An unusual layout
+  falls through to the AI path, which costs one parse from the monthly
+  allowance. Working as designed, but worth logging which real documents take
+  which path.
+- **S3 — pay-stub rate/hours disagreement.** When rate and hours are each
+  individually plausible but their product does not match gross, and gross
+  cannot arbitrate, `applySanityChecks` surfaces the disagreement rather than
+  guessing. The user has to resolve it by hand. Needs real-document testing to
+  learn how often this fires.
+- **S2 — no production runtime exercise of `/api/*`.** See section 5. The
+  first real request is smoke test 10.
