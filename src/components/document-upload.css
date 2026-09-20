@@ -1,0 +1,74 @@
+.ns-upload { margin-bottom: var(--space-4); }
+
+.ns-upload__box { position: relative; }
+
+.ns-upload__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-2);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+  /* Comfortably tappable on a phone, where most photos come from. */
+  min-height: 160px;
+  justify-content: center;
+}
+.ns-upload__label:hover { border-color: var(--amber); background: var(--panel-3); }
+.ns-upload input:focus-visible + .ns-upload__label {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.ns-upload__icon { font-size: 26px; color: var(--amber); }
+.ns-upload__title { font-weight: 600; font-size: 15px; }
+.ns-upload__desc { font-size: 13px; color: var(--text-dim); max-width: 42ch; line-height: 1.5; }
+.ns-upload__formats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: var(--space-1);
+}
+
+.ns-upload__busy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background: rgba(20, 23, 26, 0.9);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.ns-upload__allowance {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin: var(--space-3) 0 0;
+  text-align: center;
+}
+
+/* --- Review form -------------------------------------------------------- */
+
+.ns-review__source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.ns-review__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}

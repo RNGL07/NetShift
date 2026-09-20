@@ -1,0 +1,64 @@
+.ns-rot__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 var(--space-3);
+  flex-wrap: wrap;
+}
+.ns-rot__range {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.ns-rot__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 4px;
+}
+@media (min-width: 700px) {
+  /* Seven columns lines the calendar up by weekday on a wide screen. */
+  .ns-rot__grid { grid-template-columns: repeat(7, 1fr); }
+}
+
+.ns-rot__day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  padding: var(--space-2);
+  min-height: 62px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.ns-rot__day--working { background: var(--panel-3); color: var(--text); }
+.ns-rot__day--off { opacity: 0.55; border-style: dashed; }
+.ns-rot__day--exception { border-color: var(--amber); }
+.ns-rot__day--today { box-shadow: inset 0 0 0 1px var(--amber); }
+.ns-rot__day--sunday.ns-rot__day--working { border-left: 3px solid var(--rust-dim); }
+.ns-rot__day:hover { border-color: var(--amber); }
+
+.ns-rot__date {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+}
+.ns-rot__label { font-size: 11px; font-weight: 500; }
+.ns-rot__hours { font-family: var(--font-mono); font-size: 12px; margin-top: auto; }
+.ns-rot__flag {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--blue);
+}

@@ -1,0 +1,4 @@
+# NetShift holds personal financial data behind authentication. Nothing here
+# should be crawled or indexed.
+User-agent: *
+Disallow: /

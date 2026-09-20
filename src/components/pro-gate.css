@@ -1,0 +1,41 @@
+.ns-gate { position: relative; border-radius: var(--radius-lg); overflow: hidden; }
+
+/* The preview is dimmed and blurred, not hidden: the point is to show what the
+   feature looks like while making clear it is not active. `pointer-events:none`
+   keeps a keyboard user from tabbing into controls they cannot use. */
+.ns-gate__preview {
+  filter: blur(3px) saturate(0.5);
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+  min-height: 160px;
+}
+
+.ns-gate__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: linear-gradient(to bottom, rgba(20, 23, 26, 0.72), rgba(20, 23, 26, 0.92));
+}
+
+/* When there is no preview the overlay sits in normal flow so the block still
+   takes up space. */
+.ns-gate:not(:has(.ns-gate__preview)) .ns-gate__overlay {
+  position: static;
+  background: var(--panel-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-4);
+}
+
+.ns-gate__card { text-align: center; max-width: 42ch; }
+.ns-gate__title { margin: var(--space-3) 0 var(--space-2); }
+.ns-gate__desc {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  margin-bottom: var(--space-4);
+  line-height: 1.55;
+}
+.ns-gate__link { color: inherit; text-decoration: none; }

@@ -1,0 +1,22 @@
+.ns-invest__subhead { font-size: 13px; color: var(--amber); margin: var(--space-4) 0 var(--space-3); }
+.ns-invest__alloc { margin-bottom: var(--space-3); }
+.ns-invest__alloc-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 13px;
+  margin-bottom: var(--space-2);
+}
+.ns-invest__total { font-family: var(--font-mono); font-weight: 600; font-size: 15px; }
+.ns-invest__stamp {
+  display: block;
+  font-size: 10.5px;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+}
+.ns-invest__cash { max-width: 240px; }
+.ns-invest__add {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
