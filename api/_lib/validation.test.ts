@@ -216,7 +216,9 @@ describe('validateMarketReport', () => {
 
   it('caps the watch list', () => {
     const many = Array.from({ length: 30 }, (_, i) => ({ ticker: `AA${i}`, note: 'x' }));
-    expect(validateMarketReport({ stocks_to_watch: many }).value.stocksToWatch.length).toBeLessThanOrEqual(10);
+    expect(
+      validateMarketReport({ stocks_to_watch: many }).value.stocksToWatch.length,
+    ).toBeLessThanOrEqual(10);
   });
 
   it('tolerates a malformed payload', () => {

@@ -111,23 +111,48 @@ export function AuthScreen() {
           {notice && <Callout tone="success">{notice}</Callout>}
 
           <Button type="submit" variant="primary" full loading={busy}>
-            {mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Send reset link'}
+            {mode === 'signin'
+              ? 'Sign in'
+              : mode === 'signup'
+                ? 'Create account'
+                : 'Send reset link'}
           </Button>
         </form>
 
         <div className="ns-auth__switch">
           {mode === 'signin' && (
             <>
-              <Button variant="link" onClick={() => { setMode('signup'); setError(null); setNotice(null); }}>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setMode('signup');
+                  setError(null);
+                  setNotice(null);
+                }}
+              >
                 Create an account
               </Button>
-              <Button variant="link" onClick={() => { setMode('forgot'); setError(null); setNotice(null); }}>
+              <Button
+                variant="link"
+                onClick={() => {
+                  setMode('forgot');
+                  setError(null);
+                  setNotice(null);
+                }}
+              >
                 Forgot your password?
               </Button>
             </>
           )}
           {mode !== 'signin' && (
-            <Button variant="link" onClick={() => { setMode('signin'); setError(null); setNotice(null); }}>
+            <Button
+              variant="link"
+              onClick={() => {
+                setMode('signin');
+                setError(null);
+                setNotice(null);
+              }}
+            >
               Back to sign in
             </Button>
           )}

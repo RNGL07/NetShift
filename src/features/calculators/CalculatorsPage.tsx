@@ -25,7 +25,12 @@ import {
 import { usePayProfile } from '@/features/pay-profile/PayProfileContext';
 import { DayGrid } from './DayGrid';
 import { hoursToPay, targetToHours, type WeekInput } from '@/lib/calc/pay';
-import { weeksInPeriod, type PayPeriodKind, type ShiftDesignation, type SundayTreatment } from '@/lib/calc/hours';
+import {
+  weeksInPeriod,
+  type PayPeriodKind,
+  type ShiftDesignation,
+  type SundayTreatment,
+} from '@/lib/calc/hours';
 import { fmtHours, fmtMoney, fmtRate } from '@/lib/format';
 import { num } from '@/lib/calc/money';
 import { Link } from 'react-router-dom';
@@ -132,16 +137,35 @@ function HoursToPayCalculator() {
         : { weeks }),
     });
   }, [
-    mode, week1, week2, week1Sunday, week2Sunday, week1Shift, week2Shift,
-    totalRegular, totalOvertime, totalDouble, totalsShift,
-    effectiveRate, period, effective.premiums, effective.rules,
-    effectiveDeduction, effectivePerDiemRate, effectivePerDiemDays,
+    mode,
+    week1,
+    week2,
+    week1Sunday,
+    week2Sunday,
+    week1Shift,
+    week2Shift,
+    totalRegular,
+    totalOvertime,
+    totalDouble,
+    totalsShift,
+    effectiveRate,
+    period,
+    effective.premiums,
+    effective.rules,
+    effectiveDeduction,
+    effectivePerDiemRate,
+    effectivePerDiemDays,
   ]);
 
   const hasRate = effectiveRate > 0;
   const showWeek2 = period === 'biweekly';
 
-  if (loading) return <Panel><p>Loading your pay profile…</p></Panel>;
+  if (loading)
+    return (
+      <Panel>
+        <p>Loading your pay profile…</p>
+      </Panel>
+    );
 
   return (
     <>
@@ -204,10 +228,7 @@ function HoursToPayCalculator() {
         title="Hours"
         description="Overtime depends on how hours fall across days, so enter them day by day where you can."
         actions={
-          <Button
-            variant="ghost"
-            onClick={() => setMode(mode === 'daily' ? 'totals' : 'daily')}
-          >
+          <Button variant="ghost" onClick={() => setMode(mode === 'daily' ? 'totals' : 'daily')}>
             {mode === 'daily' ? 'Enter totals instead' : 'Enter day by day'}
           </Button>
         }
@@ -227,7 +248,9 @@ function HoursToPayCalculator() {
                 onChange={(event) => setWeek1Sunday(event.target.value as SundayTreatment)}
               >
                 {SUNDAY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </SelectField>
               <SelectField
@@ -236,7 +259,9 @@ function HoursToPayCalculator() {
                 onChange={(event) => setWeek1Shift(event.target.value as ShiftDesignation)}
               >
                 {DESIGNATIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </SelectField>
             </Grid>
@@ -256,7 +281,9 @@ function HoursToPayCalculator() {
                     onChange={(event) => setWeek2Sunday(event.target.value as SundayTreatment)}
                   >
                     {SUNDAY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
                   </SelectField>
                   <SelectField
@@ -265,7 +292,9 @@ function HoursToPayCalculator() {
                     onChange={(event) => setWeek2Shift(event.target.value as ShiftDesignation)}
                   >
                     {DESIGNATIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
                   </SelectField>
                 </Grid>
@@ -317,7 +346,9 @@ function HoursToPayCalculator() {
                 onChange={(event) => setTotalsShift(event.target.value as ShiftDesignation)}
               >
                 {DESIGNATIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
               </SelectField>
             </Grid>
@@ -441,9 +472,17 @@ function TargetToHoursCalculator() {
         perDiemTotal: num(perDiemTotal),
       }),
     [
-      target, effectiveRate, period, effectiveDeduction, designation,
-      effective.premiums, effective.rules, assumeOvertime, daysPerWeek,
-      sundayDouble, perDiemTotal,
+      target,
+      effectiveRate,
+      period,
+      effectiveDeduction,
+      designation,
+      effective.premiums,
+      effective.rules,
+      assumeOvertime,
+      daysPerWeek,
+      sundayDouble,
+      perDiemTotal,
     ],
   );
 
@@ -516,7 +555,9 @@ function TargetToHoursCalculator() {
             onChange={(event) => setDesignation(event.target.value as ShiftDesignation)}
           >
             {DESIGNATIONS.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </SelectField>
           <SelectField
@@ -638,7 +679,10 @@ function StaticDayPreview({
           {weeks > 1 && <div className="ns-daypreview__label">Week {week + 1}</div>}
           <div className="ns-daypreview__row">
             {dayLabels.map((day) => (
-              <div key={day} className={`ns-daypreview__day ${over ? 'ns-daypreview__day--over' : ''}`}>
+              <div
+                key={day}
+                className={`ns-daypreview__day ${over ? 'ns-daypreview__day--over' : ''}`}
+              >
                 <span className="ns-daypreview__name">{day}</span>
                 <span className="ns-daypreview__hours tabular">{hoursPerDay.toFixed(2)}</span>
               </div>

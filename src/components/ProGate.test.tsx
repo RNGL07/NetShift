@@ -23,8 +23,11 @@ vi.mock('@/features/billing/EntitlementContext', () => ({
     can: (feature: string) => {
       // Mirrors the real tierAllows without importing the provider tree.
       const proOnly = [
-        'debt_scenarios', 'ai_market_reports', 'ai_explanations',
-        'paycheck_audit_full', 'rotation_automation',
+        'debt_scenarios',
+        'ai_market_reports',
+        'ai_explanations',
+        'paycheck_audit_full',
+        'rotation_automation',
       ];
       return mockTier.current === 'pro' || !proOnly.includes(feature);
     },
@@ -62,7 +65,10 @@ describe('ProGate for a free user', () => {
     // The feature is still named and described — a user can see what they
     // would be buying.
     expect(screen.getByText('Debt payoff scenarios')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /upgrade to pro/i })).toHaveAttribute('href', '/billing');
+    expect(screen.getByRole('link', { name: /upgrade to pro/i })).toHaveAttribute(
+      'href',
+      '/billing',
+    );
   });
 
   it('shows the preview when one is supplied, marked for assistive tech', () => {

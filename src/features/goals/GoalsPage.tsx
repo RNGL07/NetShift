@@ -32,11 +32,7 @@ import { useEntitlement } from '@/features/billing/EntitlementContext';
 import { useCollection } from '@/hooks/useCollection';
 import { deleteRow, insertRow, updateRow } from '@/services/crud';
 import type { GoalContributionRow, GoalRow } from '@/types/database';
-import {
-  GOAL_TYPE_LABELS,
-  calculateGoalFunding,
-  type GoalType,
-} from '@/lib/calc/goals';
+import { GOAL_TYPE_LABELS, calculateGoalFunding, type GoalType } from '@/lib/calc/goals';
 import { effectiveRate } from '@/lib/calc/hours';
 import { formatIsoDate, todayIso } from '@/lib/calc/dates';
 import { fmtHours, fmtMoney, fmtPct } from '@/lib/format';
@@ -48,7 +44,11 @@ export function GoalsPage() {
   const { user } = useAuth();
   const { effective } = usePayProfile();
   const { isPro } = useEntitlement();
-  const { items: goals, loading, refresh } = useCollection<GoalRow>('goals', {
+  const {
+    items: goals,
+    loading,
+    refresh,
+  } = useCollection<GoalRow>('goals', {
     orderBy: 'priority',
     ascending: true,
   });
@@ -104,7 +104,13 @@ export function GoalsPage() {
         per_paycheck_contribution: num(draft.perPaycheck),
         priority: goals.length,
       });
-      setDraft({ name: '', goalType: 'emergency_fund', targetAmount: '', targetDate: '', perPaycheck: '' });
+      setDraft({
+        name: '',
+        goalType: 'emergency_fund',
+        targetAmount: '',
+        targetDate: '',
+        perPaycheck: '',
+      });
       setAdding(false);
       await refresh();
     } catch (caught) {
@@ -263,7 +269,13 @@ function GoalCard({
   workingRate: number;
   frequency: 'weekly' | 'biweekly' | 'semimonthly' | 'monthly';
   marginalDeductionPct: number;
-  rules: { overtimeMultiplier: number; doubleTimeMultiplier: number; weeklyThreshold: number | null; dailyThreshold: number | null; sundayTreatment: 'regular' | 'ot' | 'double' };
+  rules: {
+    overtimeMultiplier: number;
+    doubleTimeMultiplier: number;
+    weeklyThreshold: number | null;
+    dailyThreshold: number | null;
+    sundayTreatment: 'regular' | 'ot' | 'double';
+  };
   userId: string | null;
   onChanged: () => Promise<void>;
   onError: (message: string | null) => void;
@@ -358,17 +370,18 @@ function GoalCard({
         )}
       </Grid>
 
-      <ProGate
-        feature="goal_projections"
-        preview={<div style={{ minHeight: 120 }} />}
-      >
+      <ProGate feature="goal_projections" preview={<div style={{ minHeight: 120 }} />}>
         {funding.hoursNeeded.overtime !== null && workingRate > 0 && (
           <>
             <h4 className="ns-goals__subhead">What that is in hours</h4>
             <DataTable
               caption="Hours needed per paycheck"
               columns={[
-                { key: 'kind', header: 'Paid at', render: (row: [string, number | null]) => row[0] },
+                {
+                  key: 'kind',
+                  header: 'Paid at',
+                  render: (row: [string, number | null]) => row[0],
+                },
                 {
                   key: 'hours',
                   header: 'Hours each paycheck',

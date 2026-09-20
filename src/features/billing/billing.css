@@ -1,5 +1,12 @@
-.ns-billing__details { margin: var(--space-4) 0; }
-.ns-billing__actions { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4); }
+.ns-billing__details {
+  margin: var(--space-4) 0;
+}
+.ns-billing__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
 .ns-billing__note {
   font-size: 12.5px;
   color: var(--text-dim);
@@ -15,9 +22,15 @@
   line-height: 1.7;
 }
 
-.ns-plans { display: grid; gap: var(--space-4); margin-bottom: var(--space-5); }
+.ns-plans {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
 @media (min-width: 640px) {
-  .ns-plans { grid-template-columns: 1fr 1fr; }
+  .ns-plans {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .ns-plans__col {
   border: 1px solid var(--border);
@@ -25,8 +38,15 @@
   padding: var(--space-4);
   background: var(--panel-2);
 }
-.ns-plans__col--pro { border-color: var(--amber-dim); }
-.ns-plans__col h4 { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); }
+.ns-plans__col--pro {
+  border-color: var(--amber-dim);
+}
+.ns-plans__col h4 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
 .ns-plans__price {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -41,13 +61,20 @@
   color: var(--text-dim);
 }
 
-.ns-plans__matrix { border-top: 1px solid var(--border); padding-top: var(--space-4); }
+.ns-plans__matrix {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-4);
+}
 .ns-plans__area {
   font-size: 12px;
   color: var(--amber);
   margin: var(--space-4) 0 var(--space-2);
 }
-.ns-plans__features { list-style: none; margin: 0; padding: 0; }
+.ns-plans__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 .ns-plans__features li {
   display: flex;
   justify-content: space-between;
@@ -56,8 +83,12 @@
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border);
 }
-.ns-plans__features li:last-child { border-bottom: none; }
-.ns-plans__feature-name { font-size: 13.5px; }
+.ns-plans__features li:last-child {
+  border-bottom: none;
+}
+.ns-plans__feature-name {
+  font-size: 13.5px;
+}
 .ns-plans__feature-desc {
   display: block;
   font-size: 12px;

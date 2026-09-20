@@ -60,7 +60,10 @@ describe('validateDocument — rejections', () => {
 
   it('rejects a missing document', () => {
     expectError(() => validateDocument({ mediaType: 'application/pdf' }), 'invalid_request');
-    expectError(() => validateDocument({ base64: '', mediaType: 'application/pdf' }), 'invalid_request');
+    expectError(
+      () => validateDocument({ base64: '', mediaType: 'application/pdf' }),
+      'invalid_request',
+    );
   });
 
   it('rejects a media type that is not on the allow-list', () => {
@@ -95,7 +98,10 @@ describe('validateDocument — rejections', () => {
   });
 
   it('rejects an empty file', () => {
-    expectError(() => validateDocument({ base64: 'JVBE', mediaType: 'application/pdf' }), 'unsupported_file_type');
+    expectError(
+      () => validateDocument({ base64: 'JVBE', mediaType: 'application/pdf' }),
+      'unsupported_file_type',
+    );
   });
 
   describe('size limit', () => {
@@ -108,7 +114,10 @@ describe('validateDocument — rejections', () => {
 
     it('rejects a file above the configured limit', () => {
       const big = fileOf([0x25, 0x50, 0x44, 0x46], 2048);
-      expectError(() => validateDocument({ base64: big, mediaType: 'application/pdf' }), 'file_too_large');
+      expectError(
+        () => validateDocument({ base64: big, mediaType: 'application/pdf' }),
+        'file_too_large',
+      );
     });
 
     it('measures the decoded size, not the base64 length', () => {
@@ -116,7 +125,9 @@ describe('validateDocument — rejections', () => {
       // encoded string were measured, under it when the bytes are.
       const justUnder = fileOf([0x25, 0x50, 0x44, 0x46], 800);
       expect(justUnder.length).toBeGreaterThan(1024);
-      expect(() => validateDocument({ base64: justUnder, mediaType: 'application/pdf' })).not.toThrow();
+      expect(() =>
+        validateDocument({ base64: justUnder, mediaType: 'application/pdf' }),
+      ).not.toThrow();
     });
 
     it('honours a raised limit', () => {

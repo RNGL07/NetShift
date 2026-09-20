@@ -168,10 +168,7 @@ export function BufferPage() {
         </Button>
       </Panel>
 
-      <Panel
-        title="What NetShift suggests"
-        tone={result.bufferGap > 0 ? 'warning' : 'success'}
-      >
+      <Panel title="What NetShift suggests" tone={result.bufferGap > 0 ? 'warning' : 'success'}>
         <Grid min={170}>
           <Stat
             label="Buffer to aim for"
@@ -217,7 +214,11 @@ export function BufferPage() {
 
       <Panel title="What your paychecks look like">
         <Grid min={160}>
-          <Stat label="Paychecks used" value={String(result.sampleSize)} sub={`Confidence: ${result.confidence}`} />
+          <Stat
+            label="Paychecks used"
+            value={String(result.sampleSize)}
+            sub={`Confidence: ${result.confidence}`}
+          />
           {result.averagePaycheck !== null && (
             <Stat label="Average take-home" value={fmtMoney(result.averagePaycheck)} />
           )}
@@ -246,11 +247,19 @@ export function BufferPage() {
 
       <ProGate
         feature="overtime_dependency"
-        preview={<Panel title="How much depends on overtime"><p>&nbsp;</p></Panel>}
+        preview={
+          <Panel title="How much depends on overtime">
+            <p>&nbsp;</p>
+          </Panel>
+        }
       >
         <Panel
           title="How much depends on overtime"
-          tone={result.obligationsDependentOnOvertime && result.obligationsDependentOnOvertime > 0 ? 'warning' : 'success'}
+          tone={
+            result.obligationsDependentOnOvertime && result.obligationsDependentOnOvertime > 0
+              ? 'warning'
+              : 'success'
+          }
         >
           <Grid min={175}>
             <Stat

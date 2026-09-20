@@ -16,12 +16,14 @@ export interface CapturedResponse {
   headers: Record<string, string>;
 }
 
-export function createRequest(options: {
-  method?: string;
-  body?: unknown;
-  query?: Record<string, string | string[]>;
-  headers?: Record<string, string>;
-} = {}): VercelRequest {
+export function createRequest(
+  options: {
+    method?: string;
+    body?: unknown;
+    query?: Record<string, string | string[]>;
+    headers?: Record<string, string>;
+  } = {},
+): VercelRequest {
   const headers: Record<string, string> = {};
   for (const [key, value] of Object.entries(options.headers ?? {})) {
     headers[key.toLowerCase()] = value;
@@ -116,8 +118,21 @@ export function createSupabaseStub(tables: Record<string, TableResult> = {}) {
     const builder: Record<string, unknown> = {};
     const chain = () => builder;
     for (const method of [
-      'select', 'eq', 'in', 'neq', 'gt', 'gte', 'lt', 'lte',
-      'order', 'limit', 'range', 'filter', 'is', 'not', 'or',
+      'select',
+      'eq',
+      'in',
+      'neq',
+      'gt',
+      'gte',
+      'lt',
+      'lte',
+      'order',
+      'limit',
+      'range',
+      'filter',
+      'is',
+      'not',
+      'or',
     ]) {
       builder[method] = chain;
     }
@@ -133,7 +148,8 @@ export function createSupabaseStub(tables: Record<string, TableResult> = {}) {
     builder.delete = () => builder;
     builder.maybeSingle = async () => result;
     builder.single = async () => result;
-    builder.then = (resolve: (value: TableResult) => unknown) => Promise.resolve(result).then(resolve);
+    builder.then = (resolve: (value: TableResult) => unknown) =>
+      Promise.resolve(result).then(resolve);
     return builder;
   };
 

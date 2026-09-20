@@ -84,7 +84,11 @@ describe('auditPaycheck — tone', () => {
 
   it('never states that payroll made an error', () => {
     const result = auditPaycheck(expected, { ...emptyActual, grossPay: 3000, hoursWorked: 90 });
-    const allText = [result.verdict, ...result.summary.map((l) => l.message), ...result.detail.map((l) => l.message)]
+    const allText = [
+      result.verdict,
+      ...result.summary.map((l) => l.message),
+      ...result.detail.map((l) => l.message),
+    ]
       .join(' ')
       .toLowerCase();
     expect(allText).not.toContain('payroll made');

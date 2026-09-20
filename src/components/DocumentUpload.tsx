@@ -116,7 +116,9 @@ export function DocumentUpload<T>({
       if (caught instanceof ApiClientError) {
         setError(caught.message);
       } else {
-        setError('That document could not be read. Try a clearer photo, or enter the figures by hand.');
+        setError(
+          'That document could not be read. Try a clearer photo, or enter the figures by hand.',
+        );
       }
     } finally {
       setBusy(null);
@@ -171,7 +173,11 @@ export function DocumentUpload<T>({
         </p>
       )}
 
-      {notice && <Callout tone="success" icon="✓">{notice}</Callout>}
+      {notice && (
+        <Callout tone="success" icon="✓">
+          {notice}
+        </Callout>
+      )}
       <ErrorMessage>{error}</ErrorMessage>
     </div>
   );

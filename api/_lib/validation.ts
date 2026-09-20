@@ -30,10 +30,12 @@ export function boundedNumber(
 ): number | null {
   if (raw === null || raw === undefined || raw === '') return null;
 
-  const parsed =
-    typeof raw === 'number' ? raw : Number(String(raw).replace(/[$,\s]/g, ''));
+  const parsed = typeof raw === 'number' ? raw : Number(String(raw).replace(/[$,\s]/g, ''));
   if (!Number.isFinite(parsed)) {
-    options.issues.push({ field: options.field, message: 'was not a number and has been left blank' });
+    options.issues.push({
+      field: options.field,
+      message: 'was not a number and has been left blank',
+    });
     return null;
   }
   if (parsed < options.min || parsed > options.max) {
@@ -63,7 +65,20 @@ export function isoDate(raw: unknown, field: string, issues: FieldIssue[]): stri
 
   const named = /^([a-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/i.exec(value);
   if (named) {
-    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const months = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
+    ];
     const index = months.indexOf(named[1].slice(0, 3).toLowerCase());
     if (index >= 0) return pad(Number(named[3]), index + 1, Number(named[2]), field, issues);
   }
@@ -138,11 +153,36 @@ export function validatePayStub(raw: unknown): ValidationResult<ValidatedPayStub
     periodEnd: isoDate(input.period_end, 'period end', issues),
     grossPay: money('gross_pay', 'gross pay'),
     netPay: money('net_pay', 'net pay'),
-    hoursWorked: boundedNumber(input.hours_worked, { min: 0, max: MAX_HOURS, field: 'hours worked', issues }),
-    regularHours: boundedNumber(input.regular_hours, { min: 0, max: MAX_HOURS, field: 'regular hours', issues }),
-    overtimeHours: boundedNumber(input.overtime_hours, { min: 0, max: MAX_HOURS, field: 'overtime hours', issues }),
-    doubleTimeHours: boundedNumber(input.double_time_hours, { min: 0, max: MAX_HOURS, field: 'double-time hours', issues }),
-    hourlyRate: boundedNumber(input.hourly_rate, { min: 0, max: MAX_RATE, field: 'hourly rate', issues }),
+    hoursWorked: boundedNumber(input.hours_worked, {
+      min: 0,
+      max: MAX_HOURS,
+      field: 'hours worked',
+      issues,
+    }),
+    regularHours: boundedNumber(input.regular_hours, {
+      min: 0,
+      max: MAX_HOURS,
+      field: 'regular hours',
+      issues,
+    }),
+    overtimeHours: boundedNumber(input.overtime_hours, {
+      min: 0,
+      max: MAX_HOURS,
+      field: 'overtime hours',
+      issues,
+    }),
+    doubleTimeHours: boundedNumber(input.double_time_hours, {
+      min: 0,
+      max: MAX_HOURS,
+      field: 'double-time hours',
+      issues,
+    }),
+    hourlyRate: boundedNumber(input.hourly_rate, {
+      min: 0,
+      max: MAX_RATE,
+      field: 'hourly rate',
+      issues,
+    }),
     federalTax: money('federal_tax', 'federal tax'),
     stateTax: money('state_tax', 'state tax'),
     socialSecurity: money('social_security', 'Social Security'),
@@ -163,7 +203,8 @@ export function validatePayStub(raw: unknown): ValidationResult<ValidatedPayStub
   if (value.grossPay !== null && value.netPay !== null && value.netPay > value.grossPay * 1.05) {
     issues.push({
       field: 'net pay',
-      message: 'came out higher than gross pay, which means a label was misread — please check both',
+      message:
+        'came out higher than gross pay, which means a label was misread — please check both',
     });
     value.netPay = null;
   }
@@ -173,7 +214,10 @@ export function validatePayStub(raw: unknown): ValidationResult<ValidatedPayStub
     value.periodEnd !== null &&
     value.periodStart > value.periodEnd
   ) {
-    issues.push({ field: 'pay period', message: 'started after it ended, so the dates were cleared' });
+    issues.push({
+      field: 'pay period',
+      message: 'started after it ended, so the dates were cleared',
+    });
     value.periodStart = null;
     value.periodEnd = null;
   }
@@ -249,7 +293,10 @@ export function validateWageSheet(raw: unknown): ValidationResult<ValidatedWageS
   steps.sort((a, b) => a.rate - b.rate);
 
   if (steps.length > 40) {
-    issues.push({ field: 'steps', message: 'had more entries than a wage ladder plausibly has; only the first 40 were kept' });
+    issues.push({
+      field: 'steps',
+      message: 'had more entries than a wage ladder plausibly has; only the first 40 were kept',
+    });
     steps.length = 40;
   }
 
@@ -257,7 +304,12 @@ export function validateWageSheet(raw: unknown): ValidationResult<ValidatedWageS
     trackLabel: shortText(input.track_label, 80),
     effectiveDate: isoDate(input.effective_date, 'effective date', issues),
     // A per-hour premium above $50 is a misread of a weekly or annual figure.
-    shiftPremium: boundedNumber(input.shift_premium, { min: 0, max: 50, field: 'shift premium', issues }),
+    shiftPremium: boundedNumber(input.shift_premium, {
+      min: 0,
+      max: 50,
+      field: 'shift premium',
+      issues,
+    }),
     teamLeaderPremium: boundedNumber(input.team_leader_premium, {
       min: 0,
       max: 50,

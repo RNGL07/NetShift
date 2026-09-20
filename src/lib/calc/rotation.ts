@@ -9,25 +9,13 @@
  * the moment the rotation changes.
  */
 
-import {
-  addDays,
-  dayIndexMonFirst,
-  daysBetween,
-  isSunday,
-  type IsoDate,
-} from './dates';
+import { addDays, dayIndexMonFirst, daysBetween, isSunday, type IsoDate } from './dates';
 import type { ShiftDesignation, SundayTreatment } from './hours';
 import { nonNegative, roundTo } from './money';
 import { shiftSpan } from './shiftHours';
 
 export type ExceptionKind =
-  | 'pto'
-  | 'unpaid_leave'
-  | 'call_in'
-  | 'training'
-  | 'holiday'
-  | 'extra_shift'
-  | 'edited';
+  'pto' | 'unpaid_leave' | 'call_in' | 'training' | 'holiday' | 'extra_shift' | 'edited';
 
 export const EXCEPTION_LABELS: Record<ExceptionKind, string> = {
   pto: 'PTO',
@@ -145,7 +133,8 @@ export function generateRotationShifts(
     if (pattern.endDate && daysBetween(date, pattern.endDate) < 0) continue;
 
     const offset = daysBetween(pattern.startDate, date);
-    const cycleIndex = ((offset % pattern.patternLength) + pattern.patternLength) % pattern.patternLength;
+    const cycleIndex =
+      ((offset % pattern.patternLength) + pattern.patternLength) % pattern.patternLength;
     const patternDay = dayByIndex.get(cycleIndex);
 
     const exception = exceptionsByDate.get(date) ?? null;
@@ -187,7 +176,8 @@ function resolveDay(
   if (exception) {
     label = EXCEPTION_LABELS[exception.kind];
     if (exception.designation) designation = exception.designation;
-    if (exception.startTime !== undefined && exception.startTime !== null) startTime = exception.startTime;
+    if (exception.startTime !== undefined && exception.startTime !== null)
+      startTime = exception.startTime;
     if (exception.endTime !== undefined && exception.endTime !== null) endTime = exception.endTime;
 
     if (exception.startTime && exception.endTime) {
@@ -261,7 +251,11 @@ export function shiftsToWeeks(shifts: readonly GeneratedShift[]): {
 
   return [...weeks.entries()]
     .sort((a, b) => daysBetween(b[0], a[0]))
-    .map(([weekStart, value]) => ({ weekStart, days: value.days, designations: value.designations }));
+    .map(([weekStart, value]) => ({
+      weekStart,
+      days: value.days,
+      designations: value.designations,
+    }));
 }
 
 /** Total scheduled paid hours over a date range. */
@@ -381,7 +375,11 @@ export function fourOnFourOffTemplate(startDate: IsoDate): RotationPattern {
 }
 
 export const ROTATION_TEMPLATES = [
-  { key: 'six-week', label: '6-week rotation (nights / mids / days)', build: sixWeekRotationTemplate },
+  {
+    key: 'six-week',
+    label: '6-week rotation (nights / mids / days)',
+    build: sixWeekRotationTemplate,
+  },
   { key: 'weekday', label: 'Monday–Friday days', build: weekdayDayShiftTemplate },
   { key: 'four-on-four-off', label: '4 on / 4 off (12-hour)', build: fourOnFourOffTemplate },
 ] as const;

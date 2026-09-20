@@ -8,10 +8,7 @@
 
 import { addDays, daysBetween, todayIso, type IsoDate, type PayFrequency } from './dates';
 import { daysPerPayPeriod } from './dates';
-import {
-  DEFAULT_OVERTIME_RULES,
-  type OvertimeRules,
-} from './hours';
+import { DEFAULT_OVERTIME_RULES, type OvertimeRules } from './hours';
 import { clamp, nonNegative, num, roundMoney, roundTo } from './money';
 
 export type GoalType =
@@ -144,7 +141,10 @@ export function calculateGoalFunding(input: GoalInput): GoalFundingResult {
     grossNeededPerPaycheck = roundMoney(requiredPerPaycheck / keepShare);
     hoursNeeded.regular = roundTo(grossNeededPerPaycheck / rate, 2);
     hoursNeeded.overtime = roundTo(grossNeededPerPaycheck / (rate * rules.overtimeMultiplier), 2);
-    hoursNeeded.doubleTime = roundTo(grossNeededPerPaycheck / (rate * rules.doubleTimeMultiplier), 2);
+    hoursNeeded.doubleTime = roundTo(
+      grossNeededPerPaycheck / (rate * rules.doubleTimeMultiplier),
+      2,
+    );
 
     const weeksPerPeriod = periodDays / 7;
     const overtimeHoursPerWeek = hoursNeeded.overtime / weeksPerPeriod;
@@ -180,11 +180,7 @@ export function calculateGoalFunding(input: GoalInput): GoalFundingResult {
         weeksSavedWithOneShiftPerWeek:
           baselineWeeks !== null
             ? roundTo(
-                Math.max(
-                  0,
-                  baselineWeeks -
-                    remaining / (planned / (periodDays / 7) + netPerShift),
-                ),
+                Math.max(0, baselineWeeks - remaining / (planned / (periodDays / 7) + netPerShift)),
                 1,
               )
             : null,

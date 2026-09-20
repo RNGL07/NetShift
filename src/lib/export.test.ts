@@ -3,7 +3,9 @@ import { toCsv } from './export';
 
 describe('toCsv', () => {
   it('writes a header row and the data rows', () => {
-    expect(toCsv(['Date', 'Amount'], [['2026-03-06', 1200]])).toBe('Date,Amount\r\n2026-03-06,1200');
+    expect(toCsv(['Date', 'Amount'], [['2026-03-06', 1200]])).toBe(
+      'Date,Amount\r\n2026-03-06,1200',
+    );
   });
 
   it('quotes cells containing commas, quotes, or newlines', () => {

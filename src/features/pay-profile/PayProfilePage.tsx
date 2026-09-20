@@ -77,8 +77,10 @@ export function PayProfilePage() {
       rolePremium: effective.premiums.rolePremium ? String(effective.premiums.rolePremium) : '',
       hasRolePremium: effective.premiums.hasRolePremium,
       designation: effective.defaultDesignation,
-      dailyThreshold: effective.rules.dailyThreshold === null ? '' : String(effective.rules.dailyThreshold),
-      weeklyThreshold: effective.rules.weeklyThreshold === null ? '' : String(effective.rules.weeklyThreshold),
+      dailyThreshold:
+        effective.rules.dailyThreshold === null ? '' : String(effective.rules.dailyThreshold),
+      weeklyThreshold:
+        effective.rules.weeklyThreshold === null ? '' : String(effective.rules.weeklyThreshold),
       overtimeMultiplier: String(effective.rules.overtimeMultiplier),
       doubleTimeMultiplier: String(effective.rules.doubleTimeMultiplier),
       sundayTreatment: effective.rules.sundayTreatment,
@@ -143,7 +145,11 @@ export function PayProfilePage() {
       />
 
       <ErrorMessage>{error ?? saveError}</ErrorMessage>
-      {saved && <Callout tone="success" icon="✓">Pay profile saved.</Callout>}
+      {saved && (
+        <Callout tone="success" icon="✓">
+          Pay profile saved.
+        </Callout>
+      )}
 
       <Panel title="Rate and premiums">
         <Grid min={200}>
@@ -202,8 +208,13 @@ export function PayProfilePage() {
 
         {num(draft.baseRate) > 0 && (
           <Callout tone="neutral">
-            On {draft.designation === 'day' ? 'days' : draft.designation === 'night' ? 'nights' : 'mids'},
-            your effective rate is{' '}
+            On{' '}
+            {draft.designation === 'day'
+              ? 'days'
+              : draft.designation === 'night'
+                ? 'nights'
+                : 'mids'}
+            , your effective rate is{' '}
             <strong>
               {fmtRate(
                 num(draft.baseRate) +
@@ -396,7 +407,8 @@ function WageLadderSection({
 
   const currentIndex = steps.findIndex((step) => step.isCurrent);
   const current = currentIndex >= 0 ? steps[currentIndex] : null;
-  const next = currentIndex >= 0 && currentIndex < steps.length - 1 ? steps[currentIndex + 1] : null;
+  const next =
+    currentIndex >= 0 && currentIndex < steps.length - 1 ? steps[currentIndex + 1] : null;
   const raise = current && next ? next.hourlyRate - current.hourlyRate : null;
 
   async function applyLadder(
@@ -423,14 +435,21 @@ function WageLadderSection({
         description="Where you are on your pay progression, and what the next step is worth."
         actions={
           ladderSource && (
-            <Badge tone="neutral" title={
-              ladderSource === 'local'
-                ? 'Read from a PDF in your browser'
+            <Badge
+              tone="neutral"
+              title={
+                ladderSource === 'local'
+                  ? 'Read from a PDF in your browser'
+                  : ladderSource === 'ai'
+                    ? 'Transcribed by the AI service'
+                    : 'Entered by hand'
+              }
+            >
+              {ladderSource === 'local'
+                ? 'parsed locally'
                 : ladderSource === 'ai'
-                  ? 'Transcribed by the AI service'
-                  : 'Entered by hand'
-            }>
-              {ladderSource === 'local' ? 'parsed locally' : ladderSource === 'ai' ? 'AI-parsed' : 'entered by hand'}
+                  ? 'AI-parsed'
+                  : 'entered by hand'}
             </Badge>
           )
         }
@@ -452,7 +471,9 @@ function WageLadderSection({
                   key: 'rate',
                   header: 'Rate',
                   align: 'right',
-                  render: (step: WageStep) => <span className="tabular">{fmtRate(step.hourlyRate)}</span>,
+                  render: (step: WageStep) => (
+                    <span className="tabular">{fmtRate(step.hourlyRate)}</span>
+                  ),
                 },
                 {
                   key: 'current',
@@ -478,8 +499,8 @@ function WageLadderSection({
             {current && next && raise !== null && (
               <Callout tone="success" icon="↗">
                 Your next step, <strong>{next.label}</strong>, is {fmtMoney(raise)}/hr more — about{' '}
-                <strong>{fmtMoney(raise * 80 * (1 - deductionPct / 100))}</strong> more take-home per
-                80-hour pay period, at your current deduction rate of {fmtPct(deductionPct)}.
+                <strong>{fmtMoney(raise * 80 * (1 - deductionPct / 100))}</strong> more take-home
+                per 80-hour pay period, at your current deduction rate of {fmtPct(deductionPct)}.
               </Callout>
             )}
             {current && !next && (
@@ -568,7 +589,11 @@ function WageLadderSection({
             )}
             <DataTable
               columns={[
-                { key: 'label', header: 'Step', render: (step: { label: string; rate: number }) => step.label },
+                {
+                  key: 'label',
+                  header: 'Step',
+                  render: (step: { label: string; rate: number }) => step.label,
+                },
                 {
                   key: 'rate',
                   header: 'Rate',
@@ -587,7 +612,10 @@ function WageLadderSection({
                 disabled={pendingSheet.steps.length === 0}
                 onClick={() =>
                   void applyLadder(
-                    pendingSheet.steps.map((step) => ({ label: step.label, hourlyRate: step.rate })),
+                    pendingSheet.steps.map((step) => ({
+                      label: step.label,
+                      hourlyRate: step.rate,
+                    })),
                     'local',
                   )
                 }
@@ -629,7 +657,9 @@ function WageLadderSection({
           </Grid>
         ))}
         <div className="ns-review__actions">
-          <Button onClick={() => setManual([...manual, { label: `Step ${manual.length + 1}`, rate: '' }])}>
+          <Button
+            onClick={() => setManual([...manual, { label: `Step ${manual.length + 1}`, rate: '' }])}
+          >
             Add a step
           </Button>
           {manual.length > 0 && (

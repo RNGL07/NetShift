@@ -40,7 +40,13 @@ import {
   type RotationDay,
   type RotationPattern,
 } from '@/lib/calc/rotation';
-import { addDays, formatIsoDate, formatIsoDateShort, startOfWeek, todayIso } from '@/lib/calc/dates';
+import {
+  addDays,
+  formatIsoDate,
+  formatIsoDateShort,
+  startOfWeek,
+  todayIso,
+} from '@/lib/calc/dates';
 import { bucketWeek } from '@/lib/calc/hours';
 import { fmtHours, fmtMoney } from '@/lib/format';
 import { effectiveRate, grossFromBuckets } from '@/lib/calc/hours';
@@ -52,15 +58,21 @@ const HORIZON_DAYS = 56; // eight weeks, which covers a six-week rotation plus c
 export function RotationsPage() {
   const { user } = useAuth();
   const { effective } = usePayProfile();
-  const { items: patterns, loading, refresh } = useCollection<RotationPatternRow>('rotation_patterns', {
+  const {
+    items: patterns,
+    loading,
+    refresh,
+  } = useCollection<RotationPatternRow>('rotation_patterns', {
     orderBy: 'created_at',
     ascending: false,
   });
-  const { items: exceptionRows, refresh: refreshExceptions } =
-    useCollection<RotationExceptionRow>('rotation_exceptions', {
+  const { items: exceptionRows, refresh: refreshExceptions } = useCollection<RotationExceptionRow>(
+    'rotation_exceptions',
+    {
       orderBy: 'exception_date',
       ascending: true,
-    });
+    },
+  );
 
   const [rangeStart, setRangeStart] = useState(() => startOfWeek(todayIso()));
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +138,8 @@ export function RotationsPage() {
         sundayTreatment: pattern.sundayTreatment ?? effective.rules.sundayTreatment,
       });
       // Priced at the designation the week is actually worked on.
-      const designation = week.designations.find((value) => value !== null) ?? effective.defaultDesignation;
+      const designation =
+        week.designations.find((value) => value !== null) ?? effective.defaultDesignation;
       const rate = effectiveRate(effective.baseRate, designation, effective.premiums);
       gross += grossFromBuckets(buckets, rate, effective.rules);
       hours += week.days.reduce((sum, value) => sum + value, 0);
@@ -223,8 +236,8 @@ export function RotationsPage() {
                   </Button>
                 }
               >
-                A six-week rotation with mandatory Saturdays is completely predictable — NetShift can
-                fill in your calendar from it and stop you entering the same hours every week.
+                A six-week rotation with mandatory Saturdays is completely predictable — NetShift
+                can fill in your calendar from it and stop you entering the same hours every week.
               </EmptyState>
             ) : (
               <>
@@ -253,7 +266,11 @@ export function RotationsPage() {
                   created, and exceptions handle the days that differ.
                 </Callout>
                 <div className="ns-review__actions">
-                  <Button variant="primary" loading={saving} onClick={() => void createFromTemplate()}>
+                  <Button
+                    variant="primary"
+                    loading={saving}
+                    onClick={() => void createFromTemplate()}
+                  >
                     Create this rotation
                   </Button>
                   <Button variant="ghost" onClick={() => setCreating(false)}>

@@ -50,7 +50,11 @@ export function projectGrowth(input: GrowthInput): GrowthResult | null {
       monthlyRate === 0
         ? start + monthly * m
         : start * (1 + monthlyRate) ** m + monthly * (((1 + monthlyRate) ** m - 1) / monthlyRate);
-    byYear.push({ year, balance: roundMoney(balance), contributed: roundMoney(start + monthly * m) });
+    byYear.push({
+      year,
+      balance: roundMoney(balance),
+      contributed: roundMoney(start + monthly * m),
+    });
   }
 
   const totalContributed = roundMoney(start + monthly * months);

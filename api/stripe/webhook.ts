@@ -106,7 +106,7 @@ async function handleEvent(event: Stripe.Event): Promise<string | null> {
       const subscriptionId =
         typeof session.subscription === 'string'
           ? session.subscription
-          : session.subscription?.id ?? null;
+          : (session.subscription?.id ?? null);
       if (!subscriptionId) return userId;
 
       const subscription = await fetchSubscription(subscriptionId);
@@ -146,7 +146,7 @@ async function handleEvent(event: Stripe.Event): Promise<string | null> {
       const subscriptionId =
         typeof invoice.subscription === 'string'
           ? invoice.subscription
-          : invoice.subscription?.id ?? null;
+          : (invoice.subscription?.id ?? null);
       if (!subscriptionId) return userId;
 
       // Re-read rather than inferring: a paid invoice may or may not have moved

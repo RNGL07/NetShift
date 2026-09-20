@@ -12,13 +12,7 @@ import { addMonths, todayIso, type IsoDate } from './dates';
 import { nonNegative, num, roundMoney } from './money';
 
 export type DebtKind =
-  | 'credit_card'
-  | 'auto'
-  | 'student'
-  | 'personal'
-  | 'mortgage'
-  | 'medical'
-  | 'other';
+  'credit_card' | 'auto' | 'student' | 'personal' | 'mortgage' | 'medical' | 'other';
 
 export const DEBT_KIND_LABELS: Record<DebtKind, string> = {
   credit_card: 'Credit card',
@@ -283,7 +277,8 @@ export function buildPayoffPlan(input: PayoffPlanInput): PayoffPlanResult {
     clearedMonth: null as number | null,
   }));
 
-  const extraRecurring = nonNegative(input.extraMonthlyPayment) + nonNegative(input.extraFromShiftsMonthly);
+  const extraRecurring =
+    nonNegative(input.extraMonthlyPayment) + nonNegative(input.extraFromShiftsMonthly);
   let oneTime = nonNegative(input.oneTimeExtraPayment);
 
   const totalMinimums = state.reduce((sum, s) => sum + nonNegative(s.debt.minimumPayment), 0);
@@ -404,7 +399,8 @@ export function buildPayoffPlan(input: PayoffPlanInput): PayoffPlanResult {
     totalInterest: roundMoney(state.reduce((sum, s) => sum + s.interest, 0)),
     totalPaid: roundMoney(state.reduce((sum, s) => sum + s.paid, 0)),
     monthsToDebtFree,
-    debtFreeDate: monthsToDebtFree === null ? null : addMonths(startDate, Math.max(0, monthsToDebtFree - 1)),
+    debtFreeDate:
+      monthsToDebtFree === null ? null : addMonths(startDate, Math.max(0, monthsToDebtFree - 1)),
     monthlyPayment,
     amortizes: cleared && !stalled,
     warnings,
@@ -421,9 +417,7 @@ export interface StrategyComparison {
 }
 
 /** Runs both orderings against the same money so they can be compared fairly. */
-export function compareStrategies(
-  input: Omit<PayoffPlanInput, 'strategy'>,
-): StrategyComparison {
+export function compareStrategies(input: Omit<PayoffPlanInput, 'strategy'>): StrategyComparison {
   const snowball = buildPayoffPlan({ ...input, strategy: 'snowball' });
   const avalanche = buildPayoffPlan({ ...input, strategy: 'avalanche' });
 
@@ -490,8 +484,5 @@ export function totalMinimums(debts: readonly Debt[]): number {
 
 /** Simple monthly interest accrual, for showing the cost of waiting. */
 export function monthlyInterestCost(debts: readonly Debt[]): number {
-  return roundMoney(
-    debts.reduce((sum, d) => sum + nonNegative(d.balance) * monthlyRate(d.apr), 0),
-  );
+  return roundMoney(debts.reduce((sum, d) => sum + nonNegative(d.balance) * monthlyRate(d.apr), 0));
 }
-

@@ -332,12 +332,12 @@ export function withinLimit(tier: PlanTier, key: keyof PlanLimits, currentCount:
 // ---------------------------------------------------------------------------
 
 export type AiOperation =
-  | 'parse_paystub'
-  | 'parse_wage_sheet'
-  | 'explain_paycheck'
-  | 'market_report';
+  'parse_paystub' | 'parse_wage_sheet' | 'explain_paycheck' | 'market_report';
 
-export const AI_OPERATIONS: Record<AiOperation, { name: string; tier: PlanTier; countsTowardAllowance: boolean }> = {
+export const AI_OPERATIONS: Record<
+  AiOperation,
+  { name: string; tier: PlanTier; countsTowardAllowance: boolean }
+> = {
   parse_paystub: { name: 'Pay-stub parsing', tier: 'free', countsTowardAllowance: true },
   parse_wage_sheet: { name: 'Wage-sheet parsing', tier: 'free', countsTowardAllowance: true },
   explain_paycheck: { name: 'Paycheck explanation', tier: 'pro', countsTowardAllowance: false },
@@ -377,9 +377,18 @@ export function resolveAiLimits(
 
   const prefix = tier === 'pro' ? 'PRO' : 'FREE';
   return {
-    monthlyDocumentParses: read(`NETSHIFT_${prefix}_MONTHLY_DOCUMENT_PARSES`, defaults.monthlyDocumentParses),
-    monthlyAiExplanations: read(`NETSHIFT_${prefix}_MONTHLY_AI_EXPLANATIONS`, defaults.monthlyAiExplanations),
-    monthlyMarketReports: read(`NETSHIFT_${prefix}_MONTHLY_MARKET_REPORTS`, defaults.monthlyMarketReports),
+    monthlyDocumentParses: read(
+      `NETSHIFT_${prefix}_MONTHLY_DOCUMENT_PARSES`,
+      defaults.monthlyDocumentParses,
+    ),
+    monthlyAiExplanations: read(
+      `NETSHIFT_${prefix}_MONTHLY_AI_EXPLANATIONS`,
+      defaults.monthlyAiExplanations,
+    ),
+    monthlyMarketReports: read(
+      `NETSHIFT_${prefix}_MONTHLY_MARKET_REPORTS`,
+      defaults.monthlyMarketReports,
+    ),
   };
 }
 
@@ -512,7 +521,12 @@ export function resolveEntitlement(input: EntitlementInput, now: Date = new Date
       };
 
     case 'paused':
-      return { ...base, tier: 'free', inGracePeriod: false, reason: 'Your subscription is paused.' };
+      return {
+        ...base,
+        tier: 'free',
+        inGracePeriod: false,
+        reason: 'Your subscription is paused.',
+      };
 
     case 'unpaid':
       return {

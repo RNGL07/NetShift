@@ -1,4 +1,8 @@
-.ns-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.ns-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 
 /* --- Top bar ------------------------------------------------------------ */
 
@@ -28,10 +32,18 @@
   flex-shrink: 0;
 }
 @media (min-width: 1000px) {
-  .ns-topbar__menu { display: none; }
+  .ns-topbar__menu {
+    display: none;
+  }
 }
 
-.ns-topbar__brand { display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 0; }
+.ns-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
 .ns-topbar__title {
   font-family: var(--font-display);
   font-weight: 800;
@@ -40,9 +52,15 @@
   text-transform: uppercase;
   line-height: 1;
 }
-.ns-topbar__title span { color: var(--amber); }
+.ns-topbar__title span {
+  color: var(--amber);
+}
 
-.ns-topbar__right { display: flex; align-items: center; gap: var(--space-3); }
+.ns-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
 .ns-topbar__email {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -53,12 +71,18 @@
   white-space: nowrap;
 }
 @media (max-width: 700px) {
-  .ns-topbar__email { display: none; }
+  .ns-topbar__email {
+    display: none;
+  }
 }
 
 /* --- Body layout -------------------------------------------------------- */
 
-.ns-shell__body { display: flex; flex: 1; min-height: 0; }
+.ns-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
 
 .ns-sidebar {
   display: none;
@@ -73,7 +97,9 @@
   max-height: calc(100vh - 61px);
 }
 @media (min-width: 1000px) {
-  .ns-sidebar { display: block; }
+  .ns-sidebar {
+    display: block;
+  }
 }
 
 .ns-main {
@@ -85,14 +111,20 @@
   margin: 0 auto;
   width: 100%;
 }
-.ns-main:focus { outline: none; }
+.ns-main:focus {
+  outline: none;
+}
 @media (min-width: 640px) {
-  .ns-main { padding: var(--space-5); }
+  .ns-main {
+    padding: var(--space-5);
+  }
 }
 
 /* --- Navigation --------------------------------------------------------- */
 
-.ns-nav__group { margin-bottom: var(--space-5); }
+.ns-nav__group {
+  margin-bottom: var(--space-5);
+}
 .ns-nav__group-title {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -102,7 +134,11 @@
   margin: 0 0 var(--space-2) var(--space-3);
   font-weight: 500;
 }
-.ns-nav ul { list-style: none; margin: 0; padding: 0; }
+.ns-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
 .ns-nav__link {
   display: flex;
@@ -115,9 +151,14 @@
   color: var(--text-dim);
   text-decoration: none;
   font-size: 14px;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
-.ns-nav__link:hover { background: var(--panel-2); color: var(--text); }
+.ns-nav__link:hover {
+  background: var(--panel-2);
+  color: var(--text);
+}
 .ns-nav__link--active {
   background: var(--panel-2);
   color: var(--text);
@@ -148,7 +189,10 @@
   box-shadow: var(--shadow-lg);
 }
 @media (min-width: 1000px) {
-  .ns-drawer, .ns-drawer__scrim { display: none; }
+  .ns-drawer,
+  .ns-drawer__scrim {
+    display: none;
+  }
 }
 
 /* --- Disclaimers -------------------------------------------------------- */
@@ -161,18 +205,42 @@
   line-height: 1.5;
   color: var(--text-faint);
 }
-.ns-disclaimer p { margin: 0 0 var(--space-2); }
-.ns-disclaimer p:last-child { margin-bottom: 0; }
+.ns-disclaimer p {
+  margin: 0 0 var(--space-2);
+}
+.ns-disclaimer p:last-child {
+  margin-bottom: 0;
+}
 
-.ns-disclaimer--inline { border-top: none; margin-top: 0; max-width: 70ch; }
+.ns-disclaimer--inline {
+  border-top: none;
+  margin-top: 0;
+  max-width: 70ch;
+}
 
-.ns-footer { margin-top: var(--space-7); border-top: 1px solid var(--border); padding-top: var(--space-3); }
+.ns-footer {
+  margin-top: var(--space-7);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-3);
+}
 
 /* --- Setup screen ------------------------------------------------------- */
 
-.ns-setup { max-width: 640px; margin: 0 auto; padding: var(--space-7) var(--space-4); }
-.ns-setup__list { font-family: var(--font-mono); font-size: 13px; line-height: 2; }
-.ns-setup__footer { font-size: 13px; color: var(--text-dim); margin-top: var(--space-4); }
+.ns-setup {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-4);
+}
+.ns-setup__list {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 2;
+}
+.ns-setup__footer {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: var(--space-4);
+}
 
 code {
   font-family: var(--font-mono);
@@ -185,8 +253,15 @@ code {
 
 /* --- Page headers ------------------------------------------------------- */
 
-.ns-page-head { margin-bottom: var(--space-5); }
-.ns-page-head__title { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.ns-page-head {
+  margin-bottom: var(--space-5);
+}
+.ns-page-head__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
 .ns-page-head__desc {
   color: var(--text-dim);
   font-size: 14px;
@@ -204,7 +279,10 @@ code {
   line-height: 1.9;
   color: var(--text-dim);
 }
-.ns-legacy__list strong { color: var(--text); font-family: var(--font-mono); }
+.ns-legacy__list strong {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
 .ns-legacy__actions {
   display: flex;
   gap: var(--space-3);

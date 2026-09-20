@@ -63,7 +63,9 @@ export function shiftSpan(input: ShiftSpanInput): ShiftSpan | null {
   if (startMinutes === null || endMinutes === null) return null;
 
   const crossesMidnight = endMinutes <= startMinutes;
-  const spanMinutes = crossesMidnight ? 1440 - startMinutes + endMinutes : endMinutes - startMinutes;
+  const spanMinutes = crossesMidnight
+    ? 1440 - startMinutes + endMinutes
+    : endMinutes - startMinutes;
 
   const unpaid = Math.max(0, input.unpaidBreakMinutes ?? 0);
   const paidBreak = Math.max(0, input.paidBreakMinutes ?? 0);

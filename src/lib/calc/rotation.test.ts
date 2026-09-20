@@ -66,7 +66,9 @@ describe('generateRotationShifts — pattern expansion', () => {
   });
 
   it('returns nothing for an inverted range', () => {
-    expect(generateRotationShifts(weekdayDayShiftTemplate(MONDAY), '2026-03-15', MONDAY)).toEqual([]);
+    expect(generateRotationShifts(weekdayDayShiftTemplate(MONDAY), '2026-03-15', MONDAY)).toEqual(
+      [],
+    );
   });
 
   it('flags Sundays so Sunday pay rules can be applied downstream', () => {
@@ -85,7 +87,9 @@ describe('generateRotationShifts — exceptions', () => {
   });
 
   it('keeps PTO hours paid', () => {
-    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [exception({ kind: 'pto', hours: 8 })]);
+    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [
+      exception({ kind: 'pto', hours: 8 }),
+    ]);
     const day = shifts.find((s) => s.date === '2026-03-04')!;
     expect(day.paidHours).toBe(8);
     expect(day.label).toBe('PTO');
@@ -93,14 +97,18 @@ describe('generateRotationShifts — exceptions', () => {
   });
 
   it('zeroes out unpaid leave', () => {
-    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [exception({ kind: 'unpaid_leave' })]);
+    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [
+      exception({ kind: 'unpaid_leave' }),
+    ]);
     const day = shifts.find((s) => s.date === '2026-03-04')!;
     expect(day.paidHours).toBe(0);
     expect(day.working).toBe(false);
   });
 
   it('zeroes out a call-in', () => {
-    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [exception({ kind: 'call_in' })]);
+    const shifts = generateRotationShifts(pattern, MONDAY, '2026-03-06', [
+      exception({ kind: 'call_in' }),
+    ]);
     expect(shifts.find((s) => s.date === '2026-03-04')!.paidHours).toBe(0);
   });
 
@@ -144,7 +152,11 @@ describe('shiftsToWeeks', () => {
   });
 
   it('starts a new week on the correct Monday even mid-pattern', () => {
-    const shifts = generateRotationShifts(weekdayDayShiftTemplate(MONDAY), '2026-03-05', '2026-03-11');
+    const shifts = generateRotationShifts(
+      weekdayDayShiftTemplate(MONDAY),
+      '2026-03-05',
+      '2026-03-11',
+    );
     const weeks = shiftsToWeeks(shifts);
     expect(weeks.map((w) => w.weekStart)).toEqual([MONDAY, '2026-03-09']);
     expect(weeks[0].days).toEqual([0, 0, 0, 8, 8, 0, 0]);

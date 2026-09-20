@@ -92,7 +92,10 @@ export type WeekHours = readonly (number | string | null | undefined)[];
  * `priorWeekHours` lets callers price an *additional* shift against hours
  * already worked in the same workweek — see `marginalWeekBuckets`.
  */
-export function bucketWeek(days: WeekHours, rules: OvertimeRules = DEFAULT_OVERTIME_RULES): HourBuckets {
+export function bucketWeek(
+  days: WeekHours,
+  rules: OvertimeRules = DEFAULT_OVERTIME_RULES,
+): HourBuckets {
   const daily = Array.from({ length: 7 }, (_, i) => nonNegative(days[i]));
   const sunday = daily[6];
   const weekdays = daily.slice(0, 6);
@@ -139,7 +142,10 @@ export function marginalWeekBuckets(
   rules: OvertimeRules = DEFAULT_OVERTIME_RULES,
 ): HourBuckets {
   const before = bucketWeek(priorDays, rules);
-  const combined = Array.from({ length: 7 }, (_, i) => nonNegative(priorDays[i]) + nonNegative(addedDays[i]));
+  const combined = Array.from(
+    { length: 7 },
+    (_, i) => nonNegative(priorDays[i]) + nonNegative(addedDays[i]),
+  );
   const after = bucketWeek(combined, rules);
   return {
     regular: after.regular - before.regular,
@@ -194,7 +200,10 @@ export function grossFromBuckets(
  * "Straight-time equivalent" hours — hours weighted by their multiplier.
  * Useful when solving for how many hours are needed to reach a gross figure.
  */
-export function weightedHours(buckets: HourBuckets, rules: OvertimeRules = DEFAULT_OVERTIME_RULES): number {
+export function weightedHours(
+  buckets: HourBuckets,
+  rules: OvertimeRules = DEFAULT_OVERTIME_RULES,
+): number {
   return (
     buckets.regular +
     buckets.overtime * rules.overtimeMultiplier +

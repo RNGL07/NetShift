@@ -49,7 +49,9 @@ describe('amortizeDebt', () => {
 
   it('reports a payment that does not cover interest instead of looping forever', () => {
     // $10,000 at 24% accrues $200/month; a $150 payment never amortises.
-    const result = amortizeDebt(debt({ balance: 10_000, apr: 24 }), 150, { startDate: '2026-01-01' });
+    const result = amortizeDebt(debt({ balance: 10_000, apr: 24 }), 150, {
+      startDate: '2026-01-01',
+    });
     expect(result.amortizes).toBe(false);
     expect(result.monthsToPayoff).toBeNull();
     expect(result.schedule).toHaveLength(0);
@@ -57,7 +59,9 @@ describe('amortizeDebt', () => {
   });
 
   it('treats a payment exactly equal to the interest as non-amortising', () => {
-    const result = amortizeDebt(debt({ balance: 10_000, apr: 24 }), 200, { startDate: '2026-01-01' });
+    const result = amortizeDebt(debt({ balance: 10_000, apr: 24 }), 200, {
+      startDate: '2026-01-01',
+    });
     expect(result.amortizes).toBe(false);
   });
 

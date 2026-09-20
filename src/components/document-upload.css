@@ -1,6 +1,10 @@
-.ns-upload { margin-bottom: var(--space-4); }
+.ns-upload {
+  margin-bottom: var(--space-4);
+}
 
-.ns-upload__box { position: relative; }
+.ns-upload__box {
+  position: relative;
+}
 
 .ns-upload__label {
   display: flex;
@@ -13,20 +17,36 @@
   background: var(--panel-2);
   cursor: pointer;
   text-align: center;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   /* Comfortably tappable on a phone, where most photos come from. */
   min-height: 160px;
   justify-content: center;
 }
-.ns-upload__label:hover { border-color: var(--amber); background: var(--panel-3); }
+.ns-upload__label:hover {
+  border-color: var(--amber);
+  background: var(--panel-3);
+}
 .ns-upload input:focus-visible + .ns-upload__label {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
-.ns-upload__icon { font-size: 26px; color: var(--amber); }
-.ns-upload__title { font-weight: 600; font-size: 15px; }
-.ns-upload__desc { font-size: 13px; color: var(--text-dim); max-width: 42ch; line-height: 1.5; }
+.ns-upload__icon {
+  font-size: 26px;
+  color: var(--amber);
+}
+.ns-upload__title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.ns-upload__desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  max-width: 42ch;
+  line-height: 1.5;
+}
 .ns-upload__formats {
   font-family: var(--font-mono);
   font-size: 11px;

@@ -244,19 +244,21 @@ export async function recordAiUsage(params: {
   outcome: 'ok' | 'error';
   errorCode?: string;
 }): Promise<void> {
-  const { error } = await serviceClient().from('ai_usage_events').insert({
-    user_id: params.userId,
-    operation: params.operation,
-    usage_month: params.month,
-    counts_toward_allowance: params.countsTowardAllowance,
-    tier_at_time: params.tier,
-    model: params.model,
-    input_tokens: params.inputTokens ?? null,
-    output_tokens: params.outputTokens ?? null,
-    duration_ms: params.durationMs ?? null,
-    outcome: params.outcome,
-    error_code: params.errorCode ?? null,
-  });
+  const { error } = await serviceClient()
+    .from('ai_usage_events')
+    .insert({
+      user_id: params.userId,
+      operation: params.operation,
+      usage_month: params.month,
+      counts_toward_allowance: params.countsTowardAllowance,
+      tier_at_time: params.tier,
+      model: params.model,
+      input_tokens: params.inputTokens ?? null,
+      output_tokens: params.outputTokens ?? null,
+      duration_ms: params.durationMs ?? null,
+      outcome: params.outcome,
+      error_code: params.errorCode ?? null,
+    });
 
   if (error) {
     // Usage accounting failing must not fail the user's request.

@@ -7,7 +7,14 @@
  * window `[payday, nextPayday)`, and a bill belongs to exactly one window.
  */
 
-import { addDays, daysBetween, isWithin, nextPayday, type IsoDate, type PayFrequency } from './dates';
+import {
+  addDays,
+  daysBetween,
+  isWithin,
+  nextPayday,
+  type IsoDate,
+  type PayFrequency,
+} from './dates';
 import { nonNegative, roundMoney } from './money';
 
 export type BillCadence = 'once' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'annual';
@@ -41,7 +48,11 @@ export interface BillOccurrence {
  * belongs to the *next* plan, not this one. That is the rule that stops a bill
  * being counted twice when two consecutive plans are open side by side.
  */
-export function billOccurrencesInWindow(bill: Bill, start: IsoDate, end: IsoDate): BillOccurrence[] {
+export function billOccurrencesInWindow(
+  bill: Bill,
+  start: IsoDate,
+  end: IsoDate,
+): BillOccurrence[] {
   const out: BillOccurrence[] = [];
   const amount = nonNegative(bill.amount);
   if (amount <= 0) return out;
@@ -226,9 +237,7 @@ export function buildPaycheckPlan(input: PaycheckPlanInput): PaycheckPlanResult 
   const debt = nonNegative(input.plannedDebtPayments);
   const buffer = nonNegative(input.safetyBuffer);
 
-  const safeToSpend = roundMoney(
-    startingBalance + takeHome - billsDue - savings - debt - buffer,
-  );
+  const safeToSpend = roundMoney(startingBalance + takeHome - billsDue - savings - debt - buffer);
   const projectedEndingBalance = roundMoney(safeToSpend + buffer);
 
   const workings: PaycheckPlanResult['workings'] = [
@@ -250,7 +259,9 @@ export function buildPaycheckPlan(input: PaycheckPlanInput): PaycheckPlanResult 
     warnings.push('Bills in this window exceed this paycheck on their own.');
   }
   if (daysBetween(input.payPeriodEnd, payday) < 0) {
-    warnings.push('The payday is before the end of the pay period it covers. Double-check the dates.');
+    warnings.push(
+      'The payday is before the end of the pay period it covers. Double-check the dates.',
+    );
   }
   const outsideWindow = input.bills.filter(
     (b) => b.cadence === 'once' && !excluded.has(b.id) && !isWithin(b.dueDate, payday, next),

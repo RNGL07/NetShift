@@ -2,7 +2,10 @@
 
 const EM_DASH = '—';
 
-export function fmtMoney(value: number | null | undefined, options: { compact?: boolean } = {}): string {
+export function fmtMoney(
+  value: number | null | undefined,
+  options: { compact?: boolean } = {},
+): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return EM_DASH;
   if (options.compact && Math.abs(value) >= 10_000) {
     return `$${(value / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`;
@@ -38,7 +41,10 @@ export function fmtRate(value: number | null | undefined): string {
 
 export function fmtNumber(value: number | null | undefined, digits = 0): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return EM_DASH;
-  return value.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 export function fmtMonths(months: number | null | undefined): string {

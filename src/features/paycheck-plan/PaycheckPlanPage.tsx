@@ -36,7 +36,13 @@ import { useCollection } from '@/hooks/useCollection';
 import { deleteRow, insertRow } from '@/services/crud';
 import type { BillRow } from '@/types/database';
 import { buildPaycheckPlan, type Bill, type BillCadence } from '@/lib/calc/paycheckPlan';
-import { formatIsoDate, formatIsoDateShort, nextPayday, paydaySeries, todayIso } from '@/lib/calc/dates';
+import {
+  formatIsoDate,
+  formatIsoDateShort,
+  nextPayday,
+  paydaySeries,
+  todayIso,
+} from '@/lib/calc/dates';
 import { fmtMoney } from '@/lib/format';
 import { num } from '@/lib/calc/money';
 import { PLAN_LIMITS } from '@/config/plans';
@@ -55,7 +61,11 @@ export function PaycheckPlanPage() {
   const { user } = useAuth();
   const { effective } = usePayProfile();
   const { isPro } = useEntitlement();
-  const { items: billRows, loading, refresh } = useCollection<BillRow>('bills', {
+  const {
+    items: billRows,
+    loading,
+    refresh,
+  } = useCollection<BillRow>('bills', {
     orderBy: 'due_date',
     ascending: true,
     isNull: ['archived_at'],
@@ -122,8 +132,16 @@ export function PaycheckPlanPage() {
       safetyBuffer: num(safetyBuffer),
     });
   }, [
-    payday, effective.payFrequency, effective.deductionPct, expectedGross,
-    expectedDeductions, startingBalance, bills, plannedSavings, plannedDebt, safetyBuffer,
+    payday,
+    effective.payFrequency,
+    effective.deductionPct,
+    expectedGross,
+    expectedDeductions,
+    startingBalance,
+    bills,
+    plannedSavings,
+    plannedDebt,
+    safetyBuffer,
   ]);
 
   if (loading) return <LoadingState label="Loading your plan…" />;
@@ -450,7 +468,9 @@ function BillsSection({
             <SelectField
               label="Repeats"
               value={draft.cadence}
-              onChange={(event) => setDraft({ ...draft, cadence: event.target.value as BillCadence })}
+              onChange={(event) =>
+                setDraft({ ...draft, cadence: event.target.value as BillCadence })
+              }
             >
               {(Object.keys(CADENCE_LABELS) as BillCadence[]).map((cadence) => (
                 <option key={cadence} value={cadence} disabled={cadence !== 'once' && !isPro}>

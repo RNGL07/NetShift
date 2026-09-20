@@ -50,7 +50,11 @@ describe('calculateGoalFunding', () => {
   });
 
   it('uses the effective rate when premiums apply', () => {
-    const result = calculateGoalFunding({ ...base, targetDate: '2026-07-01', effectiveRate: 42.25 });
+    const result = calculateGoalFunding({
+      ...base,
+      targetDate: '2026-07-01',
+      effectiveRate: 42.25,
+    });
     expect(result.hoursNeeded.regular).toBeCloseTo(result.grossNeededPerPaycheck! / 42.25, 2);
   });
 

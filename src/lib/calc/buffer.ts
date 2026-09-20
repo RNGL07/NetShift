@@ -111,7 +111,9 @@ export function calculateBuffer(input: BufferInput): BufferResult {
   const sampleSize = nets.length;
 
   const essentials = nonNegative(input.monthlyEssentialExpenses);
-  const totalObligations = nonNegative(input.monthlyTotalObligations ?? input.monthlyEssentialExpenses);
+  const totalObligations = nonNegative(
+    input.monthlyTotalObligations ?? input.monthlyEssentialExpenses,
+  );
   const targetMonths = Math.max(0.5, num(input.targetMonthsOfCover, 3));
   const currentBufferBalance = nonNegative(input.currentBufferBalance);
 
@@ -188,7 +190,11 @@ export function calculateBuffer(input: BufferInput): BufferResult {
   const conventionalBuffer = essentials * targetMonths;
   const variabilityBuffer = (avg - lowestNormal) * (perYear / 12) * targetMonths;
   const recommendedBuffer = roundMoney(
-    Math.max(essentials, shortfallBuffer, Math.min(conventionalBuffer, Math.max(variabilityBuffer, monthlyGap * targetMonths))),
+    Math.max(
+      essentials,
+      shortfallBuffer,
+      Math.min(conventionalBuffer, Math.max(variabilityBuffer, monthlyGap * targetMonths)),
+    ),
   );
 
   const baseRate = nonNegative(input.baseRate);
@@ -242,7 +248,9 @@ export function calculateBuffer(input: BufferInput): BufferResult {
     );
   }
   if (essentials <= 0) {
-    warnings.push('Add your essential monthly expenses to get a buffer figure grounded in your real costs.');
+    warnings.push(
+      'Add your essential monthly expenses to get a buffer figure grounded in your real costs.',
+    );
   }
 
   return {

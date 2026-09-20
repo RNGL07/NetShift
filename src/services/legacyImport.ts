@@ -112,7 +112,11 @@ function toIsoOrNull(value: unknown): string | null {
   }
 
   const parsed = new Date(trimmed);
-  if (Number.isFinite(parsed.getTime()) && parsed.getFullYear() > 1990 && parsed.getFullYear() < 2100) {
+  if (
+    Number.isFinite(parsed.getTime()) &&
+    parsed.getFullYear() > 1990 &&
+    parsed.getFullYear() < 2100
+  ) {
     return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
   }
   return null;
@@ -224,7 +228,10 @@ export async function importLegacyData(
           if (rate === null || rate <= 0 || rate > 500) return null;
           return {
             pay_profile_id: profileId,
-            label: typeof step.label === 'string' && step.label.trim() ? step.label.slice(0, 60) : `Step ${index + 1}`,
+            label:
+              typeof step.label === 'string' && step.label.trim()
+                ? step.label.slice(0, 60)
+                : `Step ${index + 1}`,
             hourly_rate: rate,
             sort_order: index,
             is_current: false,
@@ -274,7 +281,10 @@ export async function importLegacyData(
 
     for (const [index, entry] of accounts.entries()) {
       const account = (entry ?? {}) as Record<string, unknown>;
-      const name = typeof account.name === 'string' && account.name.trim() ? account.name.slice(0, 80) : `Account ${index + 1}`;
+      const name =
+        typeof account.name === 'string' && account.name.trim()
+          ? account.name.slice(0, 80)
+          : `Account ${index + 1}`;
       const isCash = account.kind === 'cash';
       const balance = toNumberOrNull(account.balance);
 
@@ -293,7 +303,8 @@ export async function importLegacyData(
           const holdings = (account.holdings as unknown[])
             .map((holdingEntry, holdingIndex) => {
               const holding = (holdingEntry ?? {}) as Record<string, unknown>;
-              const ticker = typeof holding.ticker === 'string' ? holding.ticker.trim().toUpperCase() : '';
+              const ticker =
+                typeof holding.ticker === 'string' ? holding.ticker.trim().toUpperCase() : '';
               const shares = toNumberOrNull(holding.shares) ?? 0;
               const manualPrice = toNumberOrNull(holding.manualPrice);
               // The table requires a ticker or a name; skip rows with neither.
@@ -335,10 +346,13 @@ export async function importLegacyData(
           generated_at:
             typeof report.generatedAt === 'string' ? report.generatedAt : new Date().toISOString(),
           as_of: typeof report.asOf === 'string' ? report.asOf.slice(0, 80) : null,
-          stock_market: typeof report.stockMarket === 'string' ? report.stockMarket.slice(0, 2000) : null,
+          stock_market:
+            typeof report.stockMarket === 'string' ? report.stockMarket.slice(0, 2000) : null,
           stocks_to_watch: Array.isArray(report.stocksToWatch) ? report.stocksToWatch : [],
-          housing_market: typeof report.housingMarket === 'string' ? report.housingMarket.slice(0, 2000) : null,
-          commodities: typeof report.commodities === 'string' ? report.commodities.slice(0, 2000) : null,
+          housing_market:
+            typeof report.housingMarket === 'string' ? report.housingMarket.slice(0, 2000) : null,
+          commodities:
+            typeof report.commodities === 'string' ? report.commodities.slice(0, 2000) : null,
         };
       })
       .filter((row) => row.stock_market || row.housing_market || row.commodities);

@@ -137,9 +137,7 @@ describe('Progress', () => {
 });
 
 describe('DataTable', () => {
-  const columns = [
-    { key: 'name', header: 'Name', render: (row: { name: string }) => row.name },
-  ];
+  const columns = [{ key: 'name', header: 'Name', render: (row: { name: string }) => row.name }];
 
   it('renders rows with a caption for screen readers', () => {
     render(

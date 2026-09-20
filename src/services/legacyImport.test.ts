@@ -72,7 +72,13 @@ beforeEach(() => {
 describe('pay stub import', () => {
   it('brings across a well-formed stub', async () => {
     legacyValues['paycheck-stubs'] = JSON.stringify([
-      { pay_date: '03/06/2026', gross_pay: 4391.44, net_pay: 3143.19, hours_worked: 92.5, source: 'local' },
+      {
+        pay_date: '03/06/2026',
+        gross_pay: 4391.44,
+        net_pay: 3143.19,
+        hours_worked: 92.5,
+        source: 'local',
+      },
     ]);
 
     const result = await importLegacyData('user-1', { payProfileId: 'profile-1' });
@@ -187,9 +193,7 @@ describe('premium import', () => {
 
     // The update path writes through the mocked supabase client, so this
     // asserts only that a nonsense figure does not blow up the import.
-    await expect(
-      importLegacyData('user-1', { payProfileId: 'profile-1' }),
-    ).resolves.toBeTruthy();
+    await expect(importLegacyData('user-1', { payProfileId: 'profile-1' })).resolves.toBeTruthy();
   });
 });
 

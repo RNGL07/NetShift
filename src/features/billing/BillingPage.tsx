@@ -44,7 +44,9 @@ export function BillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [busy, setBusy] = useState<'checkout' | 'portal' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [checkoutState, setCheckoutState] = useState<'idle' | 'confirming' | 'confirmed' | 'pending'>('idle');
+  const [checkoutState, setCheckoutState] = useState<
+    'idle' | 'confirming' | 'confirmed' | 'pending'
+  >('idle');
 
   const checkoutParam = searchParams.get('checkout');
 
@@ -129,9 +131,11 @@ export function BillingPage() {
 
       {checkoutState === 'pending' && (
         <Callout tone="warning" icon="!">
-          <strong>Your payment went through, but we have not had confirmation from Stripe yet.</strong>{' '}
-          This is usually a short delay. Use <em>Refresh</em> below in a minute — nothing is lost, and
-          you have not been charged twice.
+          <strong>
+            Your payment went through, but we have not had confirmation from Stripe yet.
+          </strong>{' '}
+          This is usually a short delay. Use <em>Refresh</em> below in a minute — nothing is lost,
+          and you have not been charged twice.
         </Callout>
       )}
 
@@ -154,7 +158,11 @@ export function BillingPage() {
           />
           <Stat
             label="Document parses this month"
-            value={parses.limit === null ? `${parses.used} · unlimited` : `${parses.used} / ${parses.limit}`}
+            value={
+              parses.limit === null
+                ? `${parses.used} · unlimited`
+                : `${parses.used} / ${parses.limit}`
+            }
             sub={
               parses.limit === null
                 ? 'No monthly cap on your plan.'
@@ -188,7 +196,11 @@ export function BillingPage() {
 
         <div className="ns-billing__actions">
           {!isPro && (
-            <Button variant="primary" loading={busy === 'checkout'} onClick={() => void startCheckout()}>
+            <Button
+              variant="primary"
+              loading={busy === 'checkout'}
+              onClick={() => void startCheckout()}
+            >
               Upgrade to Pro
             </Button>
           )}
@@ -218,8 +230,8 @@ export function BillingPage() {
             and no phone call.
           </li>
           <li>
-            Cancelling keeps Pro until the end of the period you have paid for, then drops you to the
-            free plan. Your data stays exactly where it is.
+            Cancelling keeps Pro until the end of the period you have paid for, then drops you to
+            the free plan. Your data stays exactly where it is.
           </li>
           <li>
             If a payment fails, Pro stays on for a short grace period while Stripe retries, so a
@@ -277,9 +289,7 @@ function PlanComparison() {
           </ul>
         </div>
         <div className="ns-plans__col ns-plans__col--pro">
-          <h4>
-            Pro {isPro && <Badge tone="green">Your plan</Badge>}
-          </h4>
+          <h4>Pro {isPro && <Badge tone="green">Your plan</Badge>}</h4>
           <p className="ns-plans__price">Billed monthly through Stripe</p>
           <ul>
             <li>Unlimited goals and paycheck history</li>

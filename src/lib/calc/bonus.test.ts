@@ -145,7 +145,10 @@ describe('planBonus — actual vs expected', () => {
 
 describe('validateAllocations', () => {
   it('accepts a valid set', () => {
-    const result = validateAllocations([allocation({ percent: 40 }), allocation({ id: 'b', percent: 60 })], 2800);
+    const result = validateAllocations(
+      [allocation({ percent: 40 }), allocation({ id: 'b', percent: 60 })],
+      2800,
+    );
     expect(result.valid).toBe(true);
   });
 
@@ -182,6 +185,8 @@ describe('validateAllocations', () => {
   });
 
   it('rejects a negative amount', () => {
-    expect(validateAllocations([allocation({ percent: null, amount: -100 })], 2800).valid).toBe(false);
+    expect(validateAllocations([allocation({ percent: null, amount: -100 })], 2800).valid).toBe(
+      false,
+    );
   });
 });

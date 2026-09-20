@@ -32,11 +32,7 @@ import { useCollection } from '@/hooks/useCollection';
 import { deleteRow, insertRow } from '@/services/crud';
 import { apiRequest, ApiClientError } from '@/lib/api/client';
 import type { PayStubRow } from '@/types/database';
-import {
-  parsePayStubText,
-  PAY_STUB_FIELDS,
-  type ParsedPayStub,
-} from '@/lib/parsing/paystub';
+import { parsePayStubText, PAY_STUB_FIELDS, type ParsedPayStub } from '@/lib/parsing/paystub';
 import { averageDeductionPct } from '@/lib/calc/pay';
 import { formatIsoDate } from '@/lib/calc/dates';
 import { fmtHours, fmtMoney, fmtPct, fmtRate } from '@/lib/format';
@@ -151,7 +147,9 @@ export function PaychecksPage() {
       });
       setExplanation({ id: stubId, body: response.explanation });
     } catch (caught) {
-      setError(caught instanceof ApiClientError ? caught.message : 'Could not explain that paycheck.');
+      setError(
+        caught instanceof ApiClientError ? caught.message : 'Could not explain that paycheck.',
+      );
     } finally {
       setExplaining(null);
     }
@@ -202,7 +200,9 @@ export function PaychecksPage() {
       {draft && (
         <Panel title="Check these figures before saving" tone="warning">
           <div className="ns-review__source">
-            <Badge tone={draftSource === 'local' ? 'green' : draftSource === 'ai' ? 'blue' : 'neutral'}>
+            <Badge
+              tone={draftSource === 'local' ? 'green' : draftSource === 'ai' ? 'blue' : 'neutral'}
+            >
               {draftSource === 'local'
                 ? 'read in your browser'
                 : draftSource === 'ai'
@@ -388,7 +388,8 @@ export function PaychecksPage() {
         <Panel title="What this paycheck says" tone="success">
           <p style={{ whiteSpace: 'pre-wrap' }}>{explanation.body}</p>
           <Callout tone="neutral">
-            An explanation of your own figures, for education. Not tax, payroll, or financial advice.
+            An explanation of your own figures, for education. Not tax, payroll, or financial
+            advice.
           </Callout>
           <Button variant="ghost" onClick={() => setExplanation(null)}>
             Close

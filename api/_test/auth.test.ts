@@ -38,7 +38,12 @@ vi.mock('../_lib/supabase', () => {
 
 // Never reached in these tests, but imported by the handlers under test.
 vi.mock('../_lib/anthropic', () => ({
-  callAnthropic: vi.fn(async () => ({ text: '{}', inputTokens: 1, outputTokens: 1, stopReason: 'end_turn' })),
+  callAnthropic: vi.fn(async () => ({
+    text: '{}',
+    inputTokens: 1,
+    outputTokens: 1,
+    stopReason: 'end_turn',
+  })),
   parseJsonResponse: (text: string) => JSON.parse(text),
 }));
 
@@ -78,14 +83,17 @@ const PROTECTED_ENDPOINTS = [
 ] as const;
 
 describe('every protected endpoint rejects an unauthenticated caller', () => {
-  it.each(PROTECTED_ENDPOINTS)('%s returns 401 with no Authorization header', async (_name, path) => {
-    const handler = await loadHandler(path);
-    const { res, captured } = createResponse();
-    await handler(createRequest({ method: 'POST', body: {} }), res);
+  it.each(PROTECTED_ENDPOINTS)(
+    '%s returns 401 with no Authorization header',
+    async (_name, path) => {
+      const handler = await loadHandler(path);
+      const { res, captured } = createResponse();
+      await handler(createRequest({ method: 'POST', body: {} }), res);
 
-    expect(captured.statusCode).toBe(401);
-    expect(errorCode(captured)).toBe('unauthorized');
-  });
+      expect(captured.statusCode).toBe(401);
+      expect(errorCode(captured)).toBe('unauthorized');
+    },
+  );
 
   it.each(PROTECTED_ENDPOINTS)('%s returns 401 for an invalid token', async (_name, path) => {
     getUser.mockResolvedValue({ data: null, error: { message: 'bad jwt' } });

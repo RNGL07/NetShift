@@ -38,20 +38,34 @@ h4 {
   line-height: 1.1;
 }
 
-h1 { font-size: 30px; }
-h2 { font-size: 22px; }
-h3 { font-size: 17px; }
-h4 { font-size: 15px; }
+h1 {
+  font-size: 30px;
+}
+h2 {
+  font-size: 22px;
+}
+h3 {
+  font-size: 17px;
+}
+h4 {
+  font-size: 15px;
+}
 
-p { margin: 0 0 var(--space-3); }
-p:last-child { margin-bottom: 0; }
+p {
+  margin: 0 0 var(--space-3);
+}
+p:last-child {
+  margin-bottom: 0;
+}
 
 a {
   color: var(--amber);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-a:hover { color: #ffc264; }
+a:hover {
+  color: #ffc264;
+}
 
 /* A single, always-visible focus style. Removing outlines makes the app
    unusable by keyboard, so it is defined once and never unset. */
@@ -117,8 +131,13 @@ button {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
 }
-*::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
 *::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 5px;

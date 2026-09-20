@@ -40,7 +40,7 @@ export function DayGrid({
         </span>
         <span className="ns-daygrid__total tabular">
           {total.toFixed(2)} hrs
-          {dailyThreshold !== null && total > (dailyThreshold * 5) && ''}
+          {dailyThreshold !== null && total > dailyThreshold * 5 && ''}
         </span>
       </div>
 

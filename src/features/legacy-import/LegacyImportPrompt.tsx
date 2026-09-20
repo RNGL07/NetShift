@@ -9,13 +9,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { usePayProfile } from '@/features/pay-profile/PayProfileContext';
-import {
-  Button,
-  Callout,
-  ErrorMessage,
-  Panel,
-  Spinner,
-} from '@/components/ui';
+import { Button, Callout, ErrorMessage, Panel, Spinner } from '@/components/ui';
 import { supabase } from '@/lib/supabase/client';
 import {
   importLegacyData,
@@ -104,14 +98,22 @@ export function LegacyImportPrompt() {
                 <li key={key}>
                   <strong>{count}</strong>{' '}
                   {key === 'paycheck-stubs'
-                    ? count === 1 ? 'pay stub' : 'pay stubs'
+                    ? count === 1
+                      ? 'pay stub'
+                      : 'pay stubs'
                     : key === 'pay-ladder'
-                      ? count === 1 ? 'wage step' : 'wage steps'
+                      ? count === 1
+                        ? 'wage step'
+                        : 'wage steps'
                       : key === 'pay-premiums'
                         ? 'premium setting'
                         : key === 'invest-accounts'
-                          ? count === 1 ? 'investment account' : 'investment accounts'
-                          : count === 1 ? 'market report' : 'market reports'}
+                          ? count === 1
+                            ? 'investment account'
+                            : 'investment accounts'
+                          : count === 1
+                            ? 'market report'
+                            : 'market reports'}
                 </li>
               ))}
             </ul>

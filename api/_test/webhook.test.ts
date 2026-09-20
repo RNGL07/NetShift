@@ -47,7 +47,11 @@ vi.mock('../_lib/supabase', () => {
 });
 
 /** Builds the `Stripe-Signature` header the way Stripe does. */
-function signPayload(payload: string, secret = WEBHOOK_SECRET, timestamp = Math.floor(Date.now() / 1000)) {
+function signPayload(
+  payload: string,
+  secret = WEBHOOK_SECRET,
+  timestamp = Math.floor(Date.now() / 1000),
+) {
   const signature = createHmac('sha256', secret).update(`${timestamp}.${payload}`).digest('hex');
   return `t=${timestamp},v1=${signature}`;
 }
@@ -80,7 +84,10 @@ function subscriptionEvent(overrides: Record<string, unknown> = {}) {
 
 /** A request whose body is a real readable stream, as Vercel delivers it. */
 function webhookRequest(payload: string, signature: string | null) {
-  const stream = Readable.from([Buffer.from(payload, 'utf8')]) as unknown as Record<string, unknown>;
+  const stream = Readable.from([Buffer.from(payload, 'utf8')]) as unknown as Record<
+    string,
+    unknown
+  >;
   stream.method = 'POST';
   stream.headers = signature ? { 'stripe-signature': signature } : {};
   stream.query = {};
@@ -200,7 +207,9 @@ describe('idempotency', () => {
     // 200 so Stripe stops retrying, and no subscription write.
     expect(captured.statusCode).toBe(200);
     expect((captured.body as { duplicate?: boolean }).duplicate).toBe(true);
-    expect(upserted.filter((u) => (u as { table: string }).table === 'subscriptions')).toHaveLength(0);
+    expect(upserted.filter((u) => (u as { table: string }).table === 'subscriptions')).toHaveLength(
+      0,
+    );
   });
 
   it('asks Stripe to retry when another delivery is mid-flight', async () => {
@@ -208,7 +217,9 @@ describe('idempotency', () => {
     const captured = await send('evt_concurrent');
 
     expect(captured.statusCode).toBe(409);
-    expect(upserted.filter((u) => (u as { table: string }).table === 'subscriptions')).toHaveLength(0);
+    expect(upserted.filter((u) => (u as { table: string }).table === 'subscriptions')).toHaveLength(
+      0,
+    );
   });
 
   it('asks Stripe to retry when the event cannot even be claimed', async () => {

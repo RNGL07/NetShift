@@ -8,16 +8,23 @@
   justify-content: center;
 }
 @media (min-width: 640px) {
-  .ns-auth { padding-top: var(--space-8); }
+  .ns-auth {
+    padding-top: var(--space-8);
+  }
 }
 
-.ns-auth__brand { text-align: center; margin-bottom: var(--space-5); }
+.ns-auth__brand {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
 .ns-auth__title {
   font-size: 40px;
   letter-spacing: 0.04em;
   margin-bottom: var(--space-3);
 }
-.ns-auth__title span { color: var(--amber); }
+.ns-auth__title span {
+  color: var(--amber);
+}
 .ns-auth__tagline {
   color: var(--text-dim);
   font-size: 14px;
@@ -35,4 +42,6 @@
   border-top: 1px solid var(--border);
 }
 
-.ns-auth__footer { margin-top: var(--space-5); }
+.ns-auth__footer {
+  margin-top: var(--space-5);
+}

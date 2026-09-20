@@ -81,7 +81,9 @@ function parseTickers(req: VercelRequest): string[] {
  * returns a CSV whose price column is the literal string `N/D` for an unknown
  * symbol — which parses as NaN if you are not looking for it.
  */
-async function fetchQuote(ticker: string): Promise<{ price: number; asOfDate: string | null } | null> {
+async function fetchQuote(
+  ticker: string,
+): Promise<{ price: number; asOfDate: string | null } | null> {
   const symbol = `${ticker.toLowerCase()}.us`;
   const url = `https://stooq.com/q/l/?s=${encodeURIComponent(symbol)}&f=sd2t2ohlcv&h&e=csv`;
 

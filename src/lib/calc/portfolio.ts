@@ -143,7 +143,8 @@ export function valueAccount(
       holding.costBasis !== null && holding.costBasis !== undefined
         ? roundMoney(holding.costBasis)
         : null;
-    const gain = costBasis !== null && price.source !== 'none' ? roundMoney(value - costBasis) : null;
+    const gain =
+      costBasis !== null && price.source !== 'none' ? roundMoney(value - costBasis) : null;
     return {
       holdingId: holding.id,
       ticker: (holding.ticker || '').trim().toUpperCase(),
@@ -153,7 +154,8 @@ export function valueAccount(
       value,
       costBasis,
       gain,
-      gainPct: gain !== null && costBasis && costBasis > 0 ? roundTo((gain / costBasis) * 100, 2) : null,
+      gainPct:
+        gain !== null && costBasis && costBasis > 0 ? roundTo((gain / costBasis) * 100, 2) : null,
     };
   });
 

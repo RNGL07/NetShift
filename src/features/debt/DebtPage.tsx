@@ -52,7 +52,11 @@ import { downloadCsv } from '@/lib/export';
 export function DebtPage() {
   const { user } = useAuth();
   const { effective } = usePayProfile();
-  const { items: debtRows, loading, refresh } = useCollection<DebtRow>('debts', {
+  const {
+    items: debtRows,
+    loading,
+    refresh,
+  } = useCollection<DebtRow>('debts', {
     orderBy: 'balance',
     ascending: true,
     isNull: ['paid_off_at'],
@@ -93,8 +97,14 @@ export function DebtPage() {
   // What one 8-hour overtime shift nets, using the user's own rate and their
   // estimated marginal withholding.
   const netPerShift = useMemo(() => {
-    const rate = effectiveRate(effective.baseRate, effective.defaultDesignation, effective.premiums);
-    return rate * 8 * effective.rules.overtimeMultiplier * (1 - effective.marginalDeductionPct / 100);
+    const rate = effectiveRate(
+      effective.baseRate,
+      effective.defaultDesignation,
+      effective.premiums,
+    );
+    return (
+      rate * 8 * effective.rules.overtimeMultiplier * (1 - effective.marginalDeductionPct / 100)
+    );
   }, [effective]);
 
   const extraFromShifts = shiftsToMonthlyExtra(netPerShift, num(extraShifts));
@@ -156,7 +166,15 @@ export function DebtPage() {
         promo_apr: draft.promoApr === '' ? null : num(draft.promoApr),
         promo_end_date: draft.promoEndDate || null,
       });
-      setDraft({ name: '', kind: 'credit_card', balance: '', apr: '', minimumPayment: '', promoApr: '', promoEndDate: '' });
+      setDraft({
+        name: '',
+        kind: 'credit_card',
+        balance: '',
+        apr: '',
+        minimumPayment: '',
+        promoApr: '',
+        promoEndDate: '',
+      });
       setAdding(false);
       await refresh();
     } catch (caught) {
@@ -273,7 +291,11 @@ export function DebtPage() {
                 label="Total balance"
                 value={fmtMoney(debts.reduce((sum, debt) => sum + debt.balance, 0))}
               />
-              <Stat label="Minimum payments" value={fmtMoney(totalMinimums(debts))} sub="per month" />
+              <Stat
+                label="Minimum payments"
+                value={fmtMoney(totalMinimums(debts))}
+                sub="per month"
+              />
               <Stat
                 label="Interest each month"
                 value={fmtMoney(monthlyInterestCost(debts))}
@@ -299,7 +321,8 @@ export function DebtPage() {
                   render: (debt: DebtRow) =>
                     debt.promo_apr !== null && debt.promo_end_date ? (
                       <span>
-                        {fmtPct(debt.promo_apr, 2)} <Badge tone="blue">until {formatIsoDate(debt.promo_end_date)}</Badge>
+                        {fmtPct(debt.promo_apr, 2)}{' '}
+                        <Badge tone="blue">until {formatIsoDate(debt.promo_end_date)}</Badge>
                         <br />
                         <span className="ns-muted">then {fmtPct(debt.apr, 2)}</span>
                       </span>
@@ -338,7 +361,11 @@ export function DebtPage() {
 
           <ProGate
             feature="debt_scenarios"
-            preview={<Panel title="Payoff plan"><p>&nbsp;</p></Panel>}
+            preview={
+              <Panel title="Payoff plan">
+                <p>&nbsp;</p>
+              </Panel>
+            }
           >
             <Panel title="Your payoff plan">
               <Grid min={180}>
@@ -451,7 +478,16 @@ export function DebtPage() {
                     onClick={() =>
                       downloadCsv(
                         'netshift-payoff-plan.csv',
-                        ['Debt', 'Month', 'Date', 'Starting balance', 'Interest', 'Principal', 'Payment', 'Ending balance'],
+                        [
+                          'Debt',
+                          'Month',
+                          'Date',
+                          'Starting balance',
+                          'Interest',
+                          'Principal',
+                          'Payment',
+                          'Ending balance',
+                        ],
                         scenario.perDebt.flatMap((debt) =>
                           debt.schedule.map((month) => [
                             debt.name,

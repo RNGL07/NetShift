@@ -164,14 +164,21 @@ export function evaluateShiftValue(input: ShiftValueInput): ShiftValueResult {
     );
   }
   if (crossesMidnight) {
-    notes.push('This shift runs past midnight. All of its hours are counted against the day it starts.');
+    notes.push(
+      'This shift runs past midnight. All of its hours are counted against the day it starts.',
+    );
   }
   if (buckets.overtime > 0 && buckets.regular > 0) {
     notes.push(
-      `${roundTo(buckets.regular, 2)} of these hours land at straight time and ${roundTo(buckets.overtime, 2)} at ${shiftRules.overtimeMultiplier}×, based on the ${roundTo(input.priorWeekHours.reduce((s, h) => s + num(h), 0), 2)} hours already on this week.`,
+      `${roundTo(buckets.regular, 2)} of these hours land at straight time and ${roundTo(buckets.overtime, 2)} at ${shiftRules.overtimeMultiplier}×, based on the ${roundTo(
+        input.priorWeekHours.reduce((s, h) => s + num(h), 0),
+        2,
+      )} hours already on this week.`,
     );
   } else if (buckets.overtime > 0 && buckets.regular === 0) {
-    notes.push('Every hour of this shift is overtime, because the week is already past the threshold.');
+    notes.push(
+      'Every hour of this shift is overtime, because the week is already past the threshold.',
+    );
   }
 
   const deductionPct = clamp(num(input.marginalDeductionPct, 0), 0, 100);

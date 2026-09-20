@@ -46,12 +46,18 @@ import './bonuses.css';
 
 export function BonusesPage() {
   const { user } = useAuth();
-  const { items: bonuses, loading, refresh } = useCollection<BonusRow>('bonuses', {
+  const {
+    items: bonuses,
+    loading,
+    refresh,
+  } = useCollection<BonusRow>('bonuses', {
     orderBy: 'expected_date',
     ascending: false,
   });
-  const { items: allocations, refresh: refreshAllocations } =
-    useCollection<BonusAllocationRow>('bonus_allocations', { orderBy: 'sort_order', ascending: true });
+  const { items: allocations, refresh: refreshAllocations } = useCollection<BonusAllocationRow>(
+    'bonus_allocations',
+    { orderBy: 'sort_order', ascending: true },
+  );
   const { items: goals } = useCollection<GoalRow>('goals', { isNull: ['completed_at'] });
   const { items: debts } = useCollection<DebtRow>('debts', { isNull: ['paid_off_at'] });
 
@@ -87,7 +93,15 @@ export function BonusesPage() {
         withholding_pct: num(draft.withholding, 30),
         allocate_against: 'conservative',
       });
-      setDraft({ name: '', kind: 'profit_sharing', expectedDate: '', conservative: '', base: '', optimistic: '', withholding: '30' });
+      setDraft({
+        name: '',
+        kind: 'profit_sharing',
+        expectedDate: '',
+        conservative: '',
+        base: '',
+        optimistic: '',
+        withholding: '30',
+      });
       setAdding(false);
       await refresh();
     } catch (caught) {
@@ -116,7 +130,11 @@ export function BonusesPage() {
 
       <ProGate
         feature="bonus_planner"
-        preview={<Panel title="Profit sharing"><p>&nbsp;</p></Panel>}
+        preview={
+          <Panel title="Profit sharing">
+            <p>&nbsp;</p>
+          </Panel>
+        }
       >
         {adding && (
           <Panel title="New bonus">
@@ -247,7 +265,9 @@ function BonusCard({
     value: '',
     linkedId: '',
   });
-  const [actualGross, setActualGross] = useState(bonus.actual_gross ? String(bonus.actual_gross) : '');
+  const [actualGross, setActualGross] = useState(
+    bonus.actual_gross ? String(bonus.actual_gross) : '',
+  );
   const [actualNet, setActualNet] = useState(bonus.actual_net ? String(bonus.actual_net) : '');
   const [busy, setBusy] = useState(false);
 
@@ -311,7 +331,9 @@ function BonusCard({
     setBusy(true);
     onError(null);
     try {
-      const [kind, id] = allocationDraft.linkedId ? allocationDraft.linkedId.split(':') : [null, null];
+      const [kind, id] = allocationDraft.linkedId
+        ? allocationDraft.linkedId.split(':')
+        : [null, null];
       await insertRow('bonus_allocations', userId, {
         bonus_id: bonus.id,
         target: allocationDraft.target,
@@ -322,7 +344,13 @@ function BonusCard({
         linked_debt_id: kind === 'debt' ? id : null,
         sort_order: allocations.length,
       });
-      setAllocationDraft({ target: 'savings', label: '', mode: 'percent', value: '', linkedId: '' });
+      setAllocationDraft({
+        target: 'savings',
+        label: '',
+        mode: 'percent',
+        value: '',
+        linkedId: '',
+      });
       await onChanged();
     } catch (caught) {
       onError(caught instanceof Error ? caught.message : 'Could not save that allocation.');
@@ -460,7 +488,9 @@ function BonusCard({
         ]}
         rows={plan.allocations}
         getKey={(row) => row.id}
-        empty={<p className="ns-muted">Nothing allocated yet. Add where the money should go below.</p>}
+        empty={
+          <p className="ns-muted">Nothing allocated yet. Add where the money should go below.</p>
+        }
       />
 
       {plan.unallocated > 0 && (
@@ -475,7 +505,10 @@ function BonusCard({
             label="Toward"
             value={allocationDraft.target}
             onChange={(event) =>
-              setAllocationDraft({ ...allocationDraft, target: event.target.value as AllocationTarget })
+              setAllocationDraft({
+                ...allocationDraft,
+                target: event.target.value as AllocationTarget,
+              })
             }
           >
             {(Object.keys(ALLOCATION_TARGET_LABELS) as AllocationTarget[]).map((target) => (
@@ -487,14 +520,19 @@ function BonusCard({
           <TextField
             label="Label"
             value={allocationDraft.label}
-            onChange={(event) => setAllocationDraft({ ...allocationDraft, label: event.target.value })}
+            onChange={(event) =>
+              setAllocationDraft({ ...allocationDraft, label: event.target.value })
+            }
             placeholder={ALLOCATION_TARGET_LABELS[allocationDraft.target]}
           />
           <SelectField
             label="As"
             value={allocationDraft.mode}
             onChange={(event) =>
-              setAllocationDraft({ ...allocationDraft, mode: event.target.value as 'percent' | 'amount' })
+              setAllocationDraft({
+                ...allocationDraft,
+                mode: event.target.value as 'percent' | 'amount',
+              })
             }
           >
             <option value="percent">A percentage</option>
@@ -508,7 +546,9 @@ function BonusCard({
             min="0"
             max={allocationDraft.mode === 'percent' ? '100' : undefined}
             value={allocationDraft.value}
-            onChange={(event) => setAllocationDraft({ ...allocationDraft, value: event.target.value })}
+            onChange={(event) =>
+              setAllocationDraft({ ...allocationDraft, value: event.target.value })
+            }
           />
           {(goals.length > 0 || debts.length > 0) && (
             <SelectField

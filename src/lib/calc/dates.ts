@@ -110,10 +110,7 @@ export function maxIso(a: IsoDate, b: IsoDate): IsoDate {
   return daysBetween(a, b) >= 0 ? b : a;
 }
 
-const MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** `2026-03-09` → `Mar 9, 2026`. Falls back to the raw string when unparsable. */
 export function formatIsoDate(value: string | null | undefined): string {

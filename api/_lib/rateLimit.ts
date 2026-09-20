@@ -28,7 +28,11 @@ export interface RateLimitRule {
 
 export const AI_RATE_LIMIT: RateLimitRule = { bucket: 'ai', limit: 10, windowSeconds: 60 };
 export const PRICES_RATE_LIMIT: RateLimitRule = { bucket: 'prices', limit: 20, windowSeconds: 60 };
-export const BILLING_RATE_LIMIT: RateLimitRule = { bucket: 'billing', limit: 10, windowSeconds: 60 };
+export const BILLING_RATE_LIMIT: RateLimitRule = {
+  bucket: 'billing',
+  limit: 10,
+  windowSeconds: 60,
+};
 
 /**
  * Consumes one token from a user's bucket, or throws `rate_limited`.

@@ -142,7 +142,8 @@ export function buildExpectedPaycheck(params: {
 
   // Premiums load onto the base rate before the multiplier, so the "effective
   // rate" is what actually prices every bucket.
-  const totalPaidHours = params.buckets.regular + params.buckets.overtime + params.buckets.doubleTime;
+  const totalPaidHours =
+    params.buckets.regular + params.buckets.overtime + params.buckets.doubleTime;
   const shiftShare = totalPaidHours > 0 ? Math.min(1, shiftHours / totalPaidHours) : 0;
   const roleShare = totalPaidHours > 0 ? Math.min(1, roleHours / totalPaidHours) : 0;
   const effective = params.baseRate + shiftPer * shiftShare + rolePer * roleShare;
@@ -238,7 +239,8 @@ export function auditPaycheck(
   const summary: AuditLine[] = [
     line('gross', 'Gross pay', expected.gross, actual.grossPay, 'money', thresholds, {
       match: 'Gross pay lines up with the hours you logged.',
-      minor: 'NetShift found a small difference in gross pay. Rounding or a premium NetShift does not know about can explain a gap this size.',
+      minor:
+        'NetShift found a small difference in gross pay. Rounding or a premium NetShift does not know about can explain a gap this size.',
       review:
         'NetShift found a difference in gross pay. This may be worth reviewing — start by confirming the pay-period dates and the hours you logged.',
       missing: 'Add a gross pay figure to the stub, or log hours for this period, to compare.',
@@ -385,9 +387,12 @@ export function auditPaycheck(
   const taxTotal = [actual.federalTax, actual.stateTax, actual.socialSecurity, actual.medicare]
     .filter((v): v is number => v !== null)
     .reduce((sum, v) => sum + v, 0);
-  const hasAnyTax = [actual.federalTax, actual.stateTax, actual.socialSecurity, actual.medicare].some(
-    (v) => v !== null,
-  );
+  const hasAnyTax = [
+    actual.federalTax,
+    actual.stateTax,
+    actual.socialSecurity,
+    actual.medicare,
+  ].some((v) => v !== null);
 
   if (hasAnyTax && actual.grossPay) {
     const impliedPct = roundTo((taxTotal / actual.grossPay) * 100, 2);
@@ -419,11 +424,14 @@ export function auditPaycheck(
 
   let verdict: string;
   if (grossLine.insufficientData) {
-    verdict = 'Not enough information yet. Add a pay stub and log this period’s hours to run the comparison.';
+    verdict =
+      'Not enough information yet. Add a pay stub and log this period’s hours to run the comparison.';
   } else if (findings.some((f) => f.severity === 'review')) {
-    verdict = 'NetShift found a difference worth reviewing. These are estimates and may not include every employer-specific payroll rule.';
+    verdict =
+      'NetShift found a difference worth reviewing. These are estimates and may not include every employer-specific payroll rule.';
   } else if (findings.length > 0) {
-    verdict = 'Small differences only — the sort of gap rounding and minor premiums usually explain.';
+    verdict =
+      'Small differences only — the sort of gap rounding and minor premiums usually explain.';
   } else {
     verdict = 'This paycheck matches what NetShift expected from the hours you logged.';
   }
@@ -491,7 +499,11 @@ export function detectAnomalies(
 
   const findings: AnomalyFinding[] = [];
 
-  const metrics: { key: AnomalyFinding['metric']; label: string; pick: (p: HistoricalPaycheck) => number | null }[] = [
+  const metrics: {
+    key: AnomalyFinding['metric'];
+    label: string;
+    pick: (p: HistoricalPaycheck) => number | null;
+  }[] = [
     { key: 'gross', label: 'gross pay', pick: (p) => p.grossPay },
     { key: 'net', label: 'take-home pay', pick: (p) => p.netPay },
     { key: 'hours', label: 'paid hours', pick: (p) => p.hoursWorked },
@@ -505,7 +517,10 @@ export function detectAnomalies(
   for (const metric of metrics) {
     const points = history
       .map((p) => ({ p, value: metric.pick(p) }))
-      .filter((x): x is { p: HistoricalPaycheck; value: number } => x.value !== null && Number.isFinite(x.value));
+      .filter(
+        (x): x is { p: HistoricalPaycheck; value: number } =>
+          x.value !== null && Number.isFinite(x.value),
+      );
     if (points.length < minHistory) continue;
 
     const values = points.map((x) => x.value);

@@ -37,8 +37,17 @@ describe('calculateBuffer — insufficient history', () => {
 
   it('reports better confidence as history grows', () => {
     const many = Array.from({ length: 14 }, (_, i) => check(2000 + i * 10));
-    expect(calculateBuffer({ history: many, frequency: 'biweekly', monthlyEssentialExpenses: 3000 }).confidence).toBe('good');
-    expect(calculateBuffer({ history: many.slice(0, 7), frequency: 'biweekly', monthlyEssentialExpenses: 3000 }).confidence).toBe('moderate');
+    expect(
+      calculateBuffer({ history: many, frequency: 'biweekly', monthlyEssentialExpenses: 3000 })
+        .confidence,
+    ).toBe('good');
+    expect(
+      calculateBuffer({
+        history: many.slice(0, 7),
+        frequency: 'biweekly',
+        monthlyEssentialExpenses: 3000,
+      }).confidence,
+    ).toBe('moderate');
   });
 });
 
@@ -53,7 +62,11 @@ describe('calculateBuffer — income statistics', () => {
   ];
 
   it('averages base-pay-only paychecks separately from all paychecks', () => {
-    const result = calculateBuffer({ history, frequency: 'biweekly', monthlyEssentialExpenses: 4000 });
+    const result = calculateBuffer({
+      history,
+      frequency: 'biweekly',
+      monthlyEssentialExpenses: 4000,
+    });
     expect(result.averageBasePayOnlyPaycheck).toBe(1825);
     expect(result.averagePaycheck).toBeGreaterThan(result.averageBasePayOnlyPaycheck!);
   });
@@ -72,15 +85,27 @@ describe('calculateBuffer — income statistics', () => {
   it('measures income variability as a coefficient of variation', () => {
     const steady = Array.from({ length: 6 }, () => check(2000, { overtimeHours: 0 }));
     const swingy = [check(1000), check(3000), check(1200), check(2800), check(900), check(3200)];
-    const steadyResult = calculateBuffer({ history: steady, frequency: 'biweekly', monthlyEssentialExpenses: 3000 });
-    const swingyResult = calculateBuffer({ history: swingy, frequency: 'biweekly', monthlyEssentialExpenses: 3000 });
+    const steadyResult = calculateBuffer({
+      history: steady,
+      frequency: 'biweekly',
+      monthlyEssentialExpenses: 3000,
+    });
+    const swingyResult = calculateBuffer({
+      history: swingy,
+      frequency: 'biweekly',
+      monthlyEssentialExpenses: 3000,
+    });
     expect(steadyResult.incomeVariabilityPct).toBe(0);
     expect(swingyResult.incomeVariabilityPct!).toBeGreaterThan(25);
     expect(swingyResult.warnings.join(' ')).toContain('swings');
   });
 
   it('reports the share of income coming from overtime', () => {
-    const result = calculateBuffer({ history, frequency: 'biweekly', monthlyEssentialExpenses: 4000 });
+    const result = calculateBuffer({
+      history,
+      frequency: 'biweekly',
+      monthlyEssentialExpenses: 4000,
+    });
     expect(result.overtimeShareOfIncomePct!).toBeGreaterThan(0);
   });
 

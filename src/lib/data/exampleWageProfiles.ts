@@ -9,10 +9,7 @@
  */
 
 export type WageSourceStatus =
-  | 'community_submitted'
-  | 'document_reviewed'
-  | 'public_source'
-  | 'user_custom';
+  'community_submitted' | 'document_reviewed' | 'public_source' | 'user_custom';
 
 export const WAGE_SOURCE_LABELS: Record<WageSourceStatus, string> = {
   community_submitted: 'Community submitted',
@@ -28,7 +25,8 @@ export const WAGE_SOURCE_DESCRIPTIONS: Record<WageSourceStatus, string> = {
     'Transcribed from a wage document a user uploaded. Still unofficial, and may be out of date or specific to one facility.',
   public_source:
     'Taken from publicly reported figures. Unofficial and possibly out of date — confirm against your own paperwork.',
-  user_custom: 'Figures you entered yourself. NetShift treats these as authoritative for your account.',
+  user_custom:
+    'Figures you entered yourself. NetShift treats these as authoritative for your account.',
 };
 
 export interface ExampleWageStep {

@@ -25,7 +25,11 @@ const account = (over: Partial<InvestmentAccount> = {}): InvestmentAccount => ({
 
 describe('resolvePrice', () => {
   it('prefers a manual price over a fetched one', () => {
-    const resolved = resolvePrice({ id: 'h', ticker: 'VOO', shares: 1, manualPrice: 480 }, prices, now);
+    const resolved = resolvePrice(
+      { id: 'h', ticker: 'VOO', shares: 1, manualPrice: 480 },
+      prices,
+      now,
+    );
     expect(resolved).toEqual({ price: 480, source: 'manual', updatedAt: null, stale: false });
   });
 
@@ -97,8 +101,18 @@ describe('valueAccount', () => {
 
 describe('summarizePortfolio', () => {
   const accounts: InvestmentAccount[] = [
-    account({ id: 'a', name: '401k', kind: 'traditional_401k', holdings: [{ id: 'h1', ticker: 'VOO', shares: 20 }] }),
-    account({ id: 'b', name: 'Roth', kind: 'roth_ira', holdings: [{ id: 'h2', ticker: 'SCHD', shares: 100 }] }),
+    account({
+      id: 'a',
+      name: '401k',
+      kind: 'traditional_401k',
+      holdings: [{ id: 'h1', ticker: 'VOO', shares: 20 }],
+    }),
+    account({
+      id: 'b',
+      name: 'Roth',
+      kind: 'roth_ira',
+      holdings: [{ id: 'h2', ticker: 'SCHD', shares: 100 }],
+    }),
     account({ id: 'c', name: 'Savings', kind: 'cash', balance: 5000, holdings: [] }),
   ];
 
@@ -151,7 +165,13 @@ describe('tickersIn', () => {
     expect(
       tickersIn([
         account({ id: 'a', holdings: [{ id: '1', ticker: 'voo', shares: 1 }] }),
-        account({ id: 'b', holdings: [{ id: '2', ticker: 'VOO', shares: 1 }, { id: '3', ticker: 'SCHD', shares: 1 }] }),
+        account({
+          id: 'b',
+          holdings: [
+            { id: '2', ticker: 'VOO', shares: 1 },
+            { id: '3', ticker: 'SCHD', shares: 1 },
+          ],
+        }),
       ]),
     ).toEqual(['SCHD', 'VOO']);
   });

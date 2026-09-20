@@ -71,7 +71,8 @@ export async function listRows<T>(
   if (options.limit) query = query.limit(options.limit);
 
   const { data, error } = await query;
-  if (error) throw new DataError(friendly(error, `Could not load ${table.replace(/_/g, ' ')}.`), error);
+  if (error)
+    throw new DataError(friendly(error, `Could not load ${table.replace(/_/g, ' ')}.`), error);
   return (data ?? []) as T[];
 }
 
@@ -158,7 +159,10 @@ export async function countRows(
   userId: string,
   options: ListOptions = {},
 ): Promise<number> {
-  let query = supabase.from(table).select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  let query = supabase
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId);
   for (const [column, value] of Object.entries(options.match ?? {})) {
     query = value === null ? query.is(column, null) : query.eq(column, value);
   }

@@ -83,7 +83,11 @@ export function HoursPage() {
   );
 
   const estimatedGross = useMemo(() => {
-    const rate = effectiveRate(effective.baseRate, effective.defaultDesignation, effective.premiums);
+    const rate = effectiveRate(
+      effective.baseRate,
+      effective.defaultDesignation,
+      effective.premiums,
+    );
     return grossFromBuckets(buckets, rate, effective.rules);
   }, [buckets, effective]);
 
@@ -197,10 +201,16 @@ export function HoursPage() {
         {buckets.overtime > 0 && (
           <Callout tone="neutral">
             {fmtHours(buckets.overtime)} of this week&rsquo;s hours are overtime under your rules
-            {effective.rules.dailyThreshold !== null && ` (over ${effective.rules.dailyThreshold} in a day`}
-            {effective.rules.dailyThreshold !== null && effective.rules.weeklyThreshold !== null && ' or '}
-            {effective.rules.weeklyThreshold !== null && `${effective.rules.dailyThreshold === null ? '(' : ''}over ${effective.rules.weeklyThreshold} in the week`}
-            {(effective.rules.dailyThreshold !== null || effective.rules.weeklyThreshold !== null) && ')'}
+            {effective.rules.dailyThreshold !== null &&
+              ` (over ${effective.rules.dailyThreshold} in a day`}
+            {effective.rules.dailyThreshold !== null &&
+              effective.rules.weeklyThreshold !== null &&
+              ' or '}
+            {effective.rules.weeklyThreshold !== null &&
+              `${effective.rules.dailyThreshold === null ? '(' : ''}over ${effective.rules.weeklyThreshold} in the week`}
+            {(effective.rules.dailyThreshold !== null ||
+              effective.rules.weeklyThreshold !== null) &&
+              ')'}
             . No hour is counted twice.
           </Callout>
         )}
@@ -243,7 +253,8 @@ function DayCard({
 
   // Clock times win over a typed total when both are present, and the computed
   // span handles a shift running past midnight.
-  const computed = start && end ? shiftSpan({ start, end, unpaidBreakMinutes: num(breakMinutes) }) : null;
+  const computed =
+    start && end ? shiftSpan({ start, end, unpaidBreakMinutes: num(breakMinutes) }) : null;
 
   return (
     <div
@@ -256,7 +267,10 @@ function DayCard({
           {dayLabel} {formatIsoDateShort(date).split(' ').slice(1).join(' ')}
         </span>
         {shift?.crosses_midnight && (
-          <Badge tone="blue" title="This shift runs past midnight and counts against the day it starts">
+          <Badge
+            tone="blue"
+            title="This shift runs past midnight and counts against the day it starts"
+          >
             +1 day
           </Badge>
         )}
@@ -379,7 +393,11 @@ function RecentHours({ shifts }: { shifts: LoggedShiftRow[] }) {
             key: 'shift',
             header: 'Shift',
             render: (shift: LoggedShiftRow) =>
-              shift.designation === 'day' ? 'Day' : shift.designation === 'night' ? 'Night' : 'Mids',
+              shift.designation === 'day'
+                ? 'Day'
+                : shift.designation === 'night'
+                  ? 'Night'
+                  : 'Mids',
           },
           {
             key: 'times',

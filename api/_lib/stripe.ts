@@ -156,29 +156,29 @@ export async function syncSubscription(
 
   const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
   const customerId =
-    typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id ?? null;
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : (subscription.customer?.id ?? null);
 
-  const { error } = await db
-    .from('subscriptions')
-    .upsert(
-      {
-        user_id: userId,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscription.id,
-        stripe_price_id: priceId,
-        status,
-        entitlement,
-        current_period_start: toIso(subscription.current_period_start),
-        current_period_end: currentPeriodEnd,
-        cancel_at_period_end: subscription.cancel_at_period_end ?? false,
-        canceled_at: toIso(subscription.canceled_at),
-        trial_end: toIso(subscription.trial_end),
-        past_due_since: pastDueSince,
-        last_stripe_event_id: eventId ?? null,
-        last_stripe_event_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    );
+  const { error } = await db.from('subscriptions').upsert(
+    {
+      user_id: userId,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      stripe_price_id: priceId,
+      status,
+      entitlement,
+      current_period_start: toIso(subscription.current_period_start),
+      current_period_end: currentPeriodEnd,
+      cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+      canceled_at: toIso(subscription.canceled_at),
+      trial_end: toIso(subscription.trial_end),
+      past_due_since: pastDueSince,
+      last_stripe_event_id: eventId ?? null,
+      last_stripe_event_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' },
+  );
 
   if (error) {
     logServerError('stripe.syncSubscription', error, { userId, subscriptionId: subscription.id });

@@ -188,8 +188,8 @@ export function PaycheckAuditPage() {
       ) : !expected ? (
         <Callout tone="warning" icon="!">
           No hours are logged between {formatIsoDate(selected.period_start)} and{' '}
-          {formatIsoDate(selected.period_end)}. Log the hours for that period and the comparison will
-          run.
+          {formatIsoDate(selected.period_end)}. Log the hours for that period and the comparison
+          will run.
         </Callout>
       ) : audit ? (
         <>
@@ -270,9 +270,9 @@ export function PaycheckAuditPage() {
               <AuditLines lines={audit.detail} />
               {audit.incomparableCount > 0 && (
                 <Callout tone="neutral">
-                  {audit.incomparableCount} of these could not be compared because the figure was not
-                  on the stub or NetShift does not estimate it. That is normal — most stubs do not
-                  break out every line.
+                  {audit.incomparableCount} of these could not be compared because the figure was
+                  not on the stub or NetShift does not estimate it. That is normal — most stubs do
+                  not break out every line.
                 </Callout>
               )}
             </Panel>
@@ -280,7 +280,11 @@ export function PaycheckAuditPage() {
 
           <ProGate
             feature="anomaly_detection"
-            preview={<Panel title="Historical anomaly detection"><p>&nbsp;</p></Panel>}
+            preview={
+              <Panel title="Historical anomaly detection">
+                <p>&nbsp;</p>
+              </Panel>
+            }
           >
             <Panel title="Anything unusual across your history">
               {!anomalies.sufficientHistory ? (
@@ -303,7 +307,11 @@ export function PaycheckAuditPage() {
                         header: 'Pay date',
                         render: (finding) => formatIsoDate(finding.payDate),
                       },
-                      { key: 'metric', header: 'Figure', render: (finding) => finding.metric.replace(/_/g, ' ') },
+                      {
+                        key: 'metric',
+                        header: 'Figure',
+                        render: (finding) => finding.metric.replace(/_/g, ' '),
+                      },
                       {
                         key: 'value',
                         header: 'This paycheck',
@@ -345,7 +353,12 @@ export function PaycheckAuditPage() {
               caption="Expected paycheck breakdown"
               columns={[
                 { key: 'item', header: 'Item', render: (row: [string, string]) => row[0] },
-                { key: 'value', header: 'Value', align: 'right', render: (row: [string, string]) => row[1] },
+                {
+                  key: 'value',
+                  header: 'Value',
+                  align: 'right',
+                  render: (row: [string, string]) => row[1],
+                },
               ]}
               rows={[
                 ['Regular hours logged', fmtHours(expected.buckets.regular)] as [string, string],
@@ -367,8 +380,8 @@ export function PaycheckAuditPage() {
 
       {!isPro && (
         <Callout tone="neutral">
-          The free plan compares gross pay and total hours. Pro adds the line-by-line reconciliation,
-          anomaly detection across your history, and CSV export.
+          The free plan compares gross pay and total hours. Pro adds the line-by-line
+          reconciliation, anomaly detection across your history, and CSV export.
         </Callout>
       )}
     </>

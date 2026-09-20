@@ -30,7 +30,11 @@ import './market-reports.css';
 
 export function MarketReportsPage() {
   const { user } = useAuth();
-  const { items: reports, loading, refresh } = useCollection<MarketReportRow>('market_reports', {
+  const {
+    items: reports,
+    loading,
+    refresh,
+  } = useCollection<MarketReportRow>('market_reports', {
     orderBy: 'generated_at',
     ascending: false,
   });
@@ -48,7 +52,9 @@ export function MarketReportsPage() {
       await refresh();
     } catch (caught) {
       setError(
-        caught instanceof ApiClientError ? caught.message : 'Could not generate a report right now.',
+        caught instanceof ApiClientError
+          ? caught.message
+          : 'Could not generate a report right now.',
       );
     } finally {
       setGenerating(false);

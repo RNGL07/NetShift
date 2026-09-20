@@ -1,4 +1,8 @@
-.ns-gate { position: relative; border-radius: var(--radius-lg); overflow: hidden; }
+.ns-gate {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
 
 /* The preview is dimmed and blurred, not hidden: the point is to show what the
    feature looks like while making clear it is not active. `pointer-events:none`
@@ -30,12 +34,20 @@
   padding: var(--space-6) var(--space-4);
 }
 
-.ns-gate__card { text-align: center; max-width: 42ch; }
-.ns-gate__title { margin: var(--space-3) 0 var(--space-2); }
+.ns-gate__card {
+  text-align: center;
+  max-width: 42ch;
+}
+.ns-gate__title {
+  margin: var(--space-3) 0 var(--space-2);
+}
 .ns-gate__desc {
   font-size: 13.5px;
   color: var(--text-dim);
   margin-bottom: var(--space-4);
   line-height: 1.55;
 }
-.ns-gate__link { color: inherit; text-decoration: none; }
+.ns-gate__link {
+  color: inherit;
+  text-decoration: none;
+}

@@ -155,7 +155,9 @@ describe('parseWageSheetText', () => {
   });
 
   it('prefers an explicit classification label over a heading', () => {
-    const { data } = parseWageSheetText(`Job Classification: Maintenance Technician\n${WAGE_SHEET}`);
+    const { data } = parseWageSheetText(
+      `Job Classification: Maintenance Technician\n${WAGE_SHEET}`,
+    );
     expect(data.trackLabel).toBe('Maintenance Technician');
   });
 

@@ -7,4 +7,6 @@
   line-height: 1.6;
   max-width: 70ch;
 }
-.ns-buffer__explain p { margin-bottom: var(--space-2); }
+.ns-buffer__explain p {
+  margin-bottom: var(--space-2);
+}

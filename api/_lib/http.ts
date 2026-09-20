@@ -101,7 +101,11 @@ export function methodGuard(
  * takes a message and a small context object that callers are expected to keep
  * free of user data — never an arbitrary request body.
  */
-export function logServerError(scope: string, error: unknown, context: Record<string, unknown> = {}): void {
+export function logServerError(
+  scope: string,
+  error: unknown,
+  context: Record<string, unknown> = {},
+): void {
   const message = error instanceof Error ? error.message : String(error);
   console.error(
     JSON.stringify({

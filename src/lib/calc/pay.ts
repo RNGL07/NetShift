@@ -175,11 +175,15 @@ export function hoursToPay(input: HoursToPayInput): HoursToPayResult {
     }
 
     const dailyLabel = rules.dailyThreshold === null ? '' : `${rules.dailyThreshold}/day or `;
-    const weeklyLabel = rules.weeklyThreshold === null ? 'no weekly rule' : `${rules.weeklyThreshold}/week`;
+    const weeklyLabel =
+      rules.weeklyThreshold === null ? 'no weekly rule' : `${rules.weeklyThreshold}/week`;
 
     if (input.payPeriod === 'weekly') {
       const rate = effectiveRate(baseRate, firstWeek.designation, premiums);
-      buckets = bucketWeek(firstWeek.days, { ...rules, sundayTreatment: firstWeek.sundayTreatment });
+      buckets = bucketWeek(firstWeek.days, {
+        ...rules,
+        sundayTreatment: firstWeek.sundayTreatment,
+      });
       gross = grossFromBuckets(buckets, rate, rules);
       pushLines('', buckets, rate);
       effectiveRates.push({ label: 'Week 1', rate });
@@ -188,8 +192,14 @@ export function hoursToPay(input: HoursToPayInput): HoursToPayResult {
       const secondWeek = weekInputs[1];
       const rate1 = effectiveRate(baseRate, firstWeek.designation, premiums);
       const rate2 = effectiveRate(baseRate, secondWeek.designation, premiums);
-      const b1 = bucketWeek(firstWeek.days, { ...rules, sundayTreatment: firstWeek.sundayTreatment });
-      const b2 = bucketWeek(secondWeek.days, { ...rules, sundayTreatment: secondWeek.sundayTreatment });
+      const b1 = bucketWeek(firstWeek.days, {
+        ...rules,
+        sundayTreatment: firstWeek.sundayTreatment,
+      });
+      const b2 = bucketWeek(secondWeek.days, {
+        ...rules,
+        sundayTreatment: secondWeek.sundayTreatment,
+      });
       buckets = addBuckets(b1, b2);
       gross = grossFromBuckets(b1, rate1, rules) + grossFromBuckets(b2, rate2, rules);
       pushLines('Week 1 ', b1, rate1);
@@ -201,7 +211,10 @@ export function hoursToPay(input: HoursToPayInput): HoursToPayResult {
       // Overtime is still evaluated per week, which is what the law requires;
       // the approximation is in the number of weeks, not the rule.
       const rate = effectiveRate(baseRate, firstWeek.designation, premiums);
-      const weekly = bucketWeek(firstWeek.days, { ...rules, sundayTreatment: firstWeek.sundayTreatment });
+      const weekly = bucketWeek(firstWeek.days, {
+        ...rules,
+        sundayTreatment: firstWeek.sundayTreatment,
+      });
       buckets = scaleBuckets(weekly, weeksCount);
       gross = grossFromBuckets(weekly, rate, rules) * weeksCount;
       pushLines('', buckets, rate);

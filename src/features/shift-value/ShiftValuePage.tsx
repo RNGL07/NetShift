@@ -99,7 +99,7 @@ export function ShiftValuePage() {
         premiums: effective.premiums,
         rules: effective.rules,
         sundayTreatment: effective.rules.sundayTreatment,
-        holidayMultiplier: isHoliday ? effective.holidayMultiplier ?? 2 : null,
+        holidayMultiplier: isHoliday ? (effective.holidayMultiplier ?? 2) : null,
         priorWeekHours,
         marginalDeductionPct: effective.marginalDeductionPct,
         commuteCost: num(commute),
@@ -107,8 +107,19 @@ export function ShiftValuePage() {
         childcareCost: num(childcare),
       }),
     [
-      date, useTimes, hours, startTime, endTime, breakMinutes, effective,
-      designation, isHoliday, priorWeekHours, commute, meals, childcare,
+      date,
+      useTimes,
+      hours,
+      startTime,
+      endTime,
+      breakMinutes,
+      effective,
+      designation,
+      isHoliday,
+      priorWeekHours,
+      commute,
+      meals,
+      childcare,
     ],
   );
 
@@ -118,7 +129,11 @@ export function ShiftValuePage() {
     if (kind === 'goal') {
       const goal = goals.find((item) => item.id === id);
       return goal
-        ? { kind: 'goal' as const, name: goal.name, remaining: Math.max(0, goal.target_amount - goal.current_amount) }
+        ? {
+            kind: 'goal' as const,
+            name: goal.name,
+            remaining: Math.max(0, goal.target_amount - goal.current_amount),
+          }
         : null;
     }
     const debt = debts.find((item) => item.id === id);
@@ -304,7 +319,13 @@ export function ShiftValuePage() {
 
       <Panel
         title="What you would actually keep"
-        tone={!result.valid ? 'default' : result.netHourlyRate < effective.baseRate * 0.6 ? 'warning' : 'success'}
+        tone={
+          !result.valid
+            ? 'default'
+            : result.netHourlyRate < effective.baseRate * 0.6
+              ? 'warning'
+              : 'success'
+        }
       >
         {!result.valid ? (
           <p className="ns-muted">{result.notes[0]}</p>
@@ -400,7 +421,11 @@ export function ShiftValuePage() {
 
       <ProGate
         feature="saved_shift_scenarios"
-        preview={<Panel title="Saved shift scenarios"><p>&nbsp;</p></Panel>}
+        preview={
+          <Panel title="Saved shift scenarios">
+            <p>&nbsp;</p>
+          </Panel>
+        }
       >
         <Panel title="Saved shift scenarios">
           <Grid min={200}>

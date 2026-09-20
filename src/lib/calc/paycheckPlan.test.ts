@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { billOccurrencesInWindow, buildPaycheckPlan, buildPlanSeries, type Bill } from './paycheckPlan';
+import {
+  billOccurrencesInWindow,
+  buildPaycheckPlan,
+  buildPlanSeries,
+  type Bill,
+} from './paycheckPlan';
 
 const bill = (over: Partial<Bill> = {}): Bill => ({
   id: 'b1',
@@ -13,12 +18,20 @@ const bill = (over: Partial<Bill> = {}): Bill => ({
 
 describe('billOccurrencesInWindow', () => {
   it('includes a bill due on the payday itself', () => {
-    const found = billOccurrencesInWindow(bill({ cadence: 'once', dueDate: '2026-03-06' }), '2026-03-06', '2026-03-20');
+    const found = billOccurrencesInWindow(
+      bill({ cadence: 'once', dueDate: '2026-03-06' }),
+      '2026-03-06',
+      '2026-03-20',
+    );
     expect(found).toHaveLength(1);
   });
 
   it('excludes a bill due exactly on the next payday, so it lands in the next plan', () => {
-    const found = billOccurrencesInWindow(bill({ cadence: 'once', dueDate: '2026-03-20' }), '2026-03-06', '2026-03-20');
+    const found = billOccurrencesInWindow(
+      bill({ cadence: 'once', dueDate: '2026-03-20' }),
+      '2026-03-06',
+      '2026-03-20',
+    );
     expect(found).toHaveLength(0);
   });
 
@@ -58,7 +71,9 @@ describe('billOccurrencesInWindow', () => {
   });
 
   it('ignores a zero-amount bill', () => {
-    expect(billOccurrencesInWindow(bill({ amount: 0 }), '2026-02-20', '2026-03-06')).toHaveLength(0);
+    expect(billOccurrencesInWindow(bill({ amount: 0 }), '2026-02-20', '2026-03-06')).toHaveLength(
+      0,
+    );
   });
 
   it('expands quarterly and annual cadences', () => {
@@ -135,7 +150,9 @@ describe('buildPaycheckPlan', () => {
   it('drops bills already marked paid', () => {
     const plan = buildPaycheckPlan({
       ...base,
-      bills: [bill({ id: 'rent', cadence: 'once', dueDate: '2026-03-10', amount: 1200, paid: true })],
+      bills: [
+        bill({ id: 'rent', cadence: 'once', dueDate: '2026-03-10', amount: 1200, paid: true }),
+      ],
     });
     expect(plan.billsDue).toBe(0);
   });

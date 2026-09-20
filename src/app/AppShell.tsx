@@ -27,7 +27,12 @@ const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', group: 'Plan' },
   { to: '/calculators', label: 'Calculators', feature: 'hours_to_pay', group: 'Plan' },
   { to: '/plan', label: 'Paycheck plan', feature: 'paycheck_forecast', group: 'Plan' },
-  { to: '/shift-value', label: 'Is this shift worth it?', feature: 'shift_value_basic', group: 'Plan' },
+  {
+    to: '/shift-value',
+    label: 'Is this shift worth it?',
+    feature: 'shift_value_basic',
+    group: 'Plan',
+  },
 
   { to: '/hours', label: 'Hours', feature: 'hours_logging', group: 'Track' },
   { to: '/paychecks', label: 'Paychecks', group: 'Track' },

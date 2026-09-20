@@ -67,10 +67,15 @@ interface PriceResponse {
 
 export function InvestmentsPage() {
   const { user } = useAuth();
-  const { items: accountRows, loading, refresh } = useCollection<InvestmentAccountRow>(
-    'investment_accounts',
-    { orderBy: 'sort_order', ascending: true, isNull: ['archived_at'] },
-  );
+  const {
+    items: accountRows,
+    loading,
+    refresh,
+  } = useCollection<InvestmentAccountRow>('investment_accounts', {
+    orderBy: 'sort_order',
+    ascending: true,
+    isNull: ['archived_at'],
+  });
   const { items: holdingRows, refresh: refreshHoldings } = useCollection<HoldingRow>('holdings', {
     orderBy: 'sort_order',
     ascending: true,
@@ -276,8 +281,9 @@ export function InvestmentsPage() {
             {summary.hasStalePrices && (
               <Callout tone="warning" icon="!">
                 Some prices are more than a day old
-                {summary.oldestPriceAt && ` — the oldest is from ${fmtRelativeTime(summary.oldestPriceAt)}`}.
-                The values below use them, so treat the total as approximate until you refresh.
+                {summary.oldestPriceAt &&
+                  ` — the oldest is from ${fmtRelativeTime(summary.oldestPriceAt)}`}
+                . The values below use them, so treat the total as approximate until you refresh.
               </Callout>
             )}
             {summary.hasUnpricedHoldings && (
@@ -347,7 +353,13 @@ function AccountPanel({
   onError: (message: string | null) => void;
 }) {
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState({ ticker: '', name: '', shares: '', costBasis: '', manualPrice: '' });
+  const [draft, setDraft] = useState({
+    ticker: '',
+    name: '',
+    shares: '',
+    costBasis: '',
+    manualPrice: '',
+  });
   const [balance, setBalance] = useState(String(raw.balance ?? ''));
   const isCash = CASH_LIKE_KINDS.includes(account.kind);
 
@@ -436,7 +448,8 @@ function AccountPanel({
                 key: 'shares',
                 header: 'Shares',
                 align: 'right',
-                render: (holding) => holding.shares.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+                render: (holding) =>
+                  holding.shares.toLocaleString(undefined, { maximumFractionDigits: 4 }),
               },
               {
                 key: 'price',
@@ -609,7 +622,12 @@ function GrowthProjection({ startingBalance }: { startingBalance: number }) {
       {result && (
         <>
           <Grid min={165}>
-            <Stat label="Projected value" value={fmtMoney(result.futureValue)} size="large" estimated />
+            <Stat
+              label="Projected value"
+              value={fmtMoney(result.futureValue)}
+              size="large"
+              estimated
+            />
             <Stat label="You would have put in" value={fmtMoney(result.totalContributed)} />
             <Stat
               label="Growth"
@@ -636,14 +654,16 @@ function GrowthProjection({ startingBalance }: { startingBalance: number }) {
                   render: (row) => fmtMoney(row.balance),
                 },
               ]}
-              rows={result.byYear.filter((row) => row.year % 5 === 0 || row.year === result.byYear.length)}
+              rows={result.byYear.filter(
+                (row) => row.year % 5 === 0 || row.year === result.byYear.length,
+              )}
               getKey={(row) => String(row.year)}
             />
           </Workings>
 
           <Callout tone="neutral">
-            Markets do not return a steady percentage. This shows what a constant rate would produce,
-            which is useful for comparing choices and useless as a prediction.
+            Markets do not return a steady percentage. This shows what a constant rate would
+            produce, which is useful for comparing choices and useless as a prediction.
           </Callout>
         </>
       )}

@@ -87,7 +87,9 @@ export function dateIn(segment: string): string | null {
 }
 
 export function textIn(segment: string): string | null {
-  const trimmed = String(segment).replace(/^[\s:\-–—]+/, '').trim();
+  const trimmed = String(segment)
+    .replace(/^[\s:\-–—]+/, '')
+    .trim();
   return trimmed && /[a-z]/i.test(trimmed) ? trimmed.slice(0, 80) : null;
 }
 
@@ -143,7 +145,20 @@ export function normalizeDate(value: string | null | undefined): string | null {
 
   const named = /^([a-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/i.exec(trimmed);
   if (named) {
-    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const months = [
+      'jan',
+      'feb',
+      'mar',
+      'apr',
+      'may',
+      'jun',
+      'jul',
+      'aug',
+      'sep',
+      'oct',
+      'nov',
+      'dec',
+    ];
     const index = months.indexOf(named[1].slice(0, 3).toLowerCase());
     if (index >= 0) return pad(Number(named[3]), index + 1, Number(named[2]));
   }

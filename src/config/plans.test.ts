@@ -68,11 +68,16 @@ describe('resolveAiLimits', () => {
   });
 
   it('treats a non-numeric override as absent rather than NaN', () => {
-    expect(resolveAiLimits('free', { NETSHIFT_FREE_MONTHLY_DOCUMENT_PARSES: 'lots' }).monthlyDocumentParses).toBe(5);
+    expect(
+      resolveAiLimits('free', { NETSHIFT_FREE_MONTHLY_DOCUMENT_PARSES: 'lots' })
+        .monthlyDocumentParses,
+    ).toBe(5);
   });
 
   it('supports an unlimited allowance', () => {
-    expect(resolveAiLimits('pro', { NETSHIFT_PRO_MONTHLY_DOCUMENT_PARSES: '-1' }).monthlyDocumentParses).toBe(-1);
+    expect(
+      resolveAiLimits('pro', { NETSHIFT_PRO_MONTHLY_DOCUMENT_PARSES: '-1' }).monthlyDocumentParses,
+    ).toBe(-1);
   });
 
   it('maps each operation to its own allowance', () => {
@@ -129,14 +134,28 @@ describe('resolveEntitlement', () => {
   });
 
   it('withholds Pro for unpaid, incomplete, paused, and absent subscriptions', () => {
-    for (const status of ['unpaid', 'incomplete', 'incomplete_expired', 'paused', 'none'] as const) {
+    for (const status of [
+      'unpaid',
+      'incomplete',
+      'incomplete_expired',
+      'paused',
+      'none',
+    ] as const) {
       expect(entitle(status).tier).toBe('free');
     }
   });
 
   it('gives every state a reason the billing screen can show', () => {
     for (const status of [
-      'active', 'trialing', 'past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', 'none',
+      'active',
+      'trialing',
+      'past_due',
+      'canceled',
+      'unpaid',
+      'incomplete',
+      'incomplete_expired',
+      'paused',
+      'none',
     ] as const) {
       expect(entitle(status).reason.length).toBeGreaterThan(10);
     }

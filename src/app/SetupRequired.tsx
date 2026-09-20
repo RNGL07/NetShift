@@ -13,8 +13,7 @@ export function SetupRequired() {
     <main className="ns-setup">
       <Panel title="NetShift needs connecting to Supabase">
         <p>
-          The app loaded, but it has no database to talk to. Two environment variables are
-          missing:
+          The app loaded, but it has no database to talk to. Two environment variables are missing:
         </p>
         <ul className="ns-setup__list">
           <li>

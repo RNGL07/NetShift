@@ -227,9 +227,33 @@ describe('targetToHours', () => {
   });
 
   it('reports unsolvable inputs rather than dividing by zero', () => {
-    expect(targetToHours({ targetTakeHome: 0, baseRate: 40, payPeriod: 'weekly', deductionPct: 25, assumeOvertime: false }).solvable).toBe(false);
-    expect(targetToHours({ targetTakeHome: 1000, baseRate: 0, payPeriod: 'weekly', deductionPct: 25, assumeOvertime: false }).solvable).toBe(false);
-    expect(targetToHours({ targetTakeHome: 1000, baseRate: 40, payPeriod: 'weekly', deductionPct: 100, assumeOvertime: false }).solvable).toBe(false);
+    expect(
+      targetToHours({
+        targetTakeHome: 0,
+        baseRate: 40,
+        payPeriod: 'weekly',
+        deductionPct: 25,
+        assumeOvertime: false,
+      }).solvable,
+    ).toBe(false);
+    expect(
+      targetToHours({
+        targetTakeHome: 1000,
+        baseRate: 0,
+        payPeriod: 'weekly',
+        deductionPct: 25,
+        assumeOvertime: false,
+      }).solvable,
+    ).toBe(false);
+    expect(
+      targetToHours({
+        targetTakeHome: 1000,
+        baseRate: 40,
+        payPeriod: 'weekly',
+        deductionPct: 100,
+        assumeOvertime: false,
+      }).solvable,
+    ).toBe(false);
   });
 
   it('breaks the answer down per day for a two-week period', () => {
@@ -269,7 +293,12 @@ describe('averageDeductionPct', () => {
   });
 
   it('ignores stubs missing either figure', () => {
-    expect(averageDeductionPct([{ grossPay: 1000, netPay: null }, { grossPay: null, netPay: 500 }])).toBeNull();
+    expect(
+      averageDeductionPct([
+        { grossPay: 1000, netPay: null },
+        { grossPay: null, netPay: 500 },
+      ]),
+    ).toBeNull();
   });
 
   it('returns null with no usable history', () => {

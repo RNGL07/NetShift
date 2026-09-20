@@ -85,11 +85,28 @@ export function SettingsPage() {
     setError(null);
     try {
       const tables = [
-        'profiles', 'user_pay_profiles', 'user_wage_ladder_steps', 'pay_periods',
-        'logged_shifts', 'pay_stubs', 'paycheck_audits', 'bills', 'paycheck_plans',
-        'goals', 'goal_contributions', 'debts', 'debt_payments', 'buffer_settings',
-        'shift_scenarios', 'rotation_patterns', 'rotation_exceptions', 'bonuses',
-        'bonus_allocations', 'investment_accounts', 'holdings', 'market_reports',
+        'profiles',
+        'user_pay_profiles',
+        'user_wage_ladder_steps',
+        'pay_periods',
+        'logged_shifts',
+        'pay_stubs',
+        'paycheck_audits',
+        'bills',
+        'paycheck_plans',
+        'goals',
+        'goal_contributions',
+        'debts',
+        'debt_payments',
+        'buffer_settings',
+        'shift_scenarios',
+        'rotation_patterns',
+        'rotation_exceptions',
+        'bonuses',
+        'bonus_allocations',
+        'investment_accounts',
+        'holdings',
+        'market_reports',
       ];
 
       const bundle: Record<string, unknown> = {
@@ -101,9 +118,10 @@ export function SettingsPage() {
         // Row-level security scopes each of these to the caller, so no
         // additional filter is needed — but one is applied anyway where the
         // table has a user_id, so an RLS misconfiguration cannot widen this.
-        const query = table === 'profiles'
-          ? supabase.from(table).select('*').eq('id', user.id)
-          : supabase.from(table).select('*').eq('user_id', user.id);
+        const query =
+          table === 'profiles'
+            ? supabase.from(table).select('*').eq('id', user.id)
+            : supabase.from(table).select('*').eq('user_id', user.id);
         const { data } = await query;
         bundle[table] = data ?? [];
       }
@@ -141,7 +159,11 @@ export function SettingsPage() {
       <PageHeader title="Settings" description="Your details, your data, and your account." />
 
       <ErrorMessage>{error}</ErrorMessage>
-      {notice && <Callout tone="success" icon="✓">{notice}</Callout>}
+      {notice && (
+        <Callout tone="success" icon="✓">
+          {notice}
+        </Callout>
+      )}
 
       <Panel title="About you">
         <Grid min={200}>

@@ -223,7 +223,9 @@ export function TextField({
         id={fieldId}
         required={required}
         aria-invalid={error ? true : undefined}
-        aria-describedby={[hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined}
+        aria-describedby={
+          [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined
+        }
         {...rest}
       />
       {hint && (
@@ -288,7 +290,9 @@ export function NumberField({
           inputMode="decimal"
           required={required}
           aria-invalid={error ? true : undefined}
-          aria-describedby={[hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined}
+          aria-describedby={
+            [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ') || undefined
+          }
           onFocus={(event) => event.currentTarget.select()}
           {...rest}
         />
@@ -417,7 +421,11 @@ export function Callout({
       // screen reader is not interrupted by every hint on the page.
       role={tone === 'danger' || tone === 'warning' ? 'alert' : undefined}
     >
-      {icon && <span className="ns-callout__icon" aria-hidden="true">{icon}</span>}
+      {icon && (
+        <span className="ns-callout__icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       <div>
         {title && <strong className="ns-callout__title">{title}</strong>}
         <div className="ns-callout__body">{children}</div>
@@ -471,7 +479,11 @@ export function EmptyState({
 }) {
   return (
     <div className="ns-empty">
-      {icon && <div className="ns-empty__icon" aria-hidden="true">{icon}</div>}
+      {icon && (
+        <div className="ns-empty__icon" aria-hidden="true">
+          {icon}
+        </div>
+      )}
       <h4 className="ns-empty__title">{title}</h4>
       {children && <p className="ns-empty__body">{children}</p>}
       {action && <div className="ns-empty__action">{action}</div>}
@@ -646,7 +658,12 @@ export function DataTable<T>({
   empty,
   caption,
 }: {
-  columns: { key: string; header: ReactNode; align?: 'left' | 'right'; render: (row: T) => ReactNode }[];
+  columns: {
+    key: string;
+    header: ReactNode;
+    align?: 'left' | 'right';
+    render: (row: T) => ReactNode;
+  }[];
   rows: T[];
   getKey: (row: T) => string;
   empty?: ReactNode;
@@ -738,7 +755,15 @@ export function Tabs<T extends string>({
   );
 }
 
-export function TabPanel({ id, active, children }: { id: string; active: boolean; children: ReactNode }) {
+export function TabPanel({
+  id,
+  active,
+  children,
+}: {
+  id: string;
+  active: boolean;
+  children: ReactNode;
+}) {
   if (!active) return null;
   return (
     <div role="tabpanel" id={`panel-${id}`} aria-labelledby={`tab-${id}`} tabIndex={0}>

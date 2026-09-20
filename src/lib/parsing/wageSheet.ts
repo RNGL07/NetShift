@@ -57,7 +57,11 @@ function collectRateSteps(lines: readonly string[], labelRe: RegExp): ParsedWage
     // Plausible hourly rates only — this keeps years, counts, and percentages out.
     if (rate === null || rate < 1 || rate > 500) continue;
     const cutAt = line.length - rest.length + rest.indexOf(rateMatch[0]);
-    const label = line.slice(0, cutAt).replace(/[\s:\-–—.]+$/, '').trim() || match[0].trim();
+    const label =
+      line
+        .slice(0, cutAt)
+        .replace(/[\s:\-–—.]+$/, '')
+        .trim() || match[0].trim();
     const key = `${label.toLowerCase()}|${rate}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -84,7 +88,18 @@ export function parseWageSheetText(text: string): {
 
   let trackLabel = findLabeledValue(
     lines,
-    ['job classification', 'classification', 'job title', 'position', 'pay track', 'wage group', 'pay grade', 'job group', 'track', 'role'],
+    [
+      'job classification',
+      'classification',
+      'job title',
+      'position',
+      'pay track',
+      'wage group',
+      'pay grade',
+      'job group',
+      'track',
+      'role',
+    ],
     textIn,
   );
 
@@ -112,24 +127,48 @@ export function parseWageSheetText(text: string): {
   const data: ParsedWageSheet = {
     trackLabel,
     effectiveDate: normalizeDate(
-      findLabeledValue(lines, ['effective date', 'effective as of', 'eff date', 'effective', 'in effect'], dateIn),
+      findLabeledValue(
+        lines,
+        ['effective date', 'effective as of', 'eff date', 'effective', 'in effect'],
+        dateIn,
+      ),
     ),
     shiftPremium: findLabeledValue(
       lines,
-      ['shift premium', 'shift differential', 'shift diff', 'off shift premium', 'night premium', 'night differential', 'second shift', 'third shift'],
+      [
+        'shift premium',
+        'shift differential',
+        'shift diff',
+        'off shift premium',
+        'night premium',
+        'night differential',
+        'second shift',
+        'third shift',
+      ],
       premiumIn,
     ),
     teamLeaderPremium: findLabeledValue(
       lines,
-      ['team leader premium', 'team lead premium', 'group leader premium', 'crew leader premium', 'leader premium', 'lead premium', 'lead differential', 'team leader', 'team lead', 'group leader'],
+      [
+        'team leader premium',
+        'team lead premium',
+        'group leader premium',
+        'crew leader premium',
+        'leader premium',
+        'lead premium',
+        'lead differential',
+        'team leader',
+        'team lead',
+        'group leader',
+      ],
       premiumIn,
     ),
     steps,
   };
 
-  const fieldsFound = (['trackLabel', 'effectiveDate', 'shiftPremium', 'teamLeaderPremium'] as const).filter(
-    (key) => data[key] !== null && data[key] !== undefined,
-  ).length;
+  const fieldsFound = (
+    ['trackLabel', 'effectiveDate', 'shiftPremium', 'teamLeaderPremium'] as const
+  ).filter((key) => data[key] !== null && data[key] !== undefined).length;
 
   return {
     data,
@@ -137,7 +176,8 @@ export function parseWageSheetText(text: string): {
       stepsFound: steps.length,
       fieldsFound,
       confident: steps.length >= 2,
-      reasons: steps.length < 2 ? ['Fewer than two wage steps were found in the document text.'] : [],
+      reasons:
+        steps.length < 2 ? ['Fewer than two wage steps were found in the document text.'] : [],
     },
   };
 }

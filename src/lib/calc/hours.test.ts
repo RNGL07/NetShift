@@ -144,11 +144,10 @@ describe('marginalWeekBuckets', () => {
   });
 
   it('prices an added Sunday under the Sunday rule, not the weekly one', () => {
-    const result = marginalWeekBuckets(
-      [8, 8, 8, 8, 8, 0, 0],
-      [0, 0, 0, 0, 0, 0, 8],
-      { ...rules, sundayTreatment: 'double' },
-    );
+    const result = marginalWeekBuckets([8, 8, 8, 8, 8, 0, 0], [0, 0, 0, 0, 0, 0, 8], {
+      ...rules,
+      sundayTreatment: 'double',
+    });
     expect(result).toEqual({ regular: 0, overtime: 0, doubleTime: 8 });
   });
 });
@@ -167,7 +166,10 @@ describe('effectiveRate', () => {
 
   it('adds the role premium when it applies, on any shift', () => {
     expect(effectiveRate(40, 'day', { ...premiums, hasRolePremium: true })).toBeCloseTo(42.25, 10);
-    expect(effectiveRate(40, 'night', { ...premiums, hasRolePremium: true })).toBeCloseTo(43.05, 10);
+    expect(effectiveRate(40, 'night', { ...premiums, hasRolePremium: true })).toBeCloseTo(
+      43.05,
+      10,
+    );
   });
 });
 

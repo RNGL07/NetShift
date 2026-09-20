@@ -193,7 +193,10 @@ export function planBonus(input: BonusInput): BonusPlanResult {
 
   const byTargetMap = new Map<AllocationTarget, number>();
   for (const allocation of resolved) {
-    byTargetMap.set(allocation.target, roundMoney((byTargetMap.get(allocation.target) ?? 0) + allocation.amount));
+    byTargetMap.set(
+      allocation.target,
+      roundMoney((byTargetMap.get(allocation.target) ?? 0) + allocation.amount),
+    );
   }
   const byTarget = [...byTargetMap.entries()]
     .map(([target, amount]) => ({
@@ -264,7 +267,10 @@ export function validateAllocations(
     const hasAmount = allocation.amount !== null && allocation.amount !== undefined;
 
     if (hasPercent && hasAmount) {
-      errors.push({ id: allocation.id, message: 'Set either a percentage or a dollar amount, not both.' });
+      errors.push({
+        id: allocation.id,
+        message: 'Set either a percentage or a dollar amount, not both.',
+      });
     }
     if (!hasPercent && !hasAmount) {
       errors.push({ id: allocation.id, message: 'Enter a percentage or a dollar amount.' });
@@ -287,7 +293,10 @@ export function validateAllocations(
   }
 
   if (totalPercent > 100.001) {
-    errors.push({ id: '__total__', message: `Percentages add up to ${totalPercent.toFixed(1)}%, which is more than the whole bonus.` });
+    errors.push({
+      id: '__total__',
+      message: `Percentages add up to ${totalPercent.toFixed(1)}%, which is more than the whole bonus.`,
+    });
   }
   if (totalRequested > allocatableNet + 0.005) {
     errors.push({

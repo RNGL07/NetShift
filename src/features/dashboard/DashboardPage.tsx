@@ -27,13 +27,7 @@ import { useCollection } from '@/hooks/useCollection';
 import type { DebtRow, GoalRow, LoggedShiftRow, PayStubRow } from '@/types/database';
 import { bucketWeek, effectiveRate, grossFromBuckets } from '@/lib/calc/hours';
 import { averageDeductionPct } from '@/lib/calc/pay';
-import {
-  daysBetween,
-  formatIsoDate,
-  nextPayday,
-  startOfWeek,
-  todayIso,
-} from '@/lib/calc/dates';
+import { daysBetween, formatIsoDate, nextPayday, startOfWeek, todayIso } from '@/lib/calc/dates';
 import { fmtHours, fmtMoney, fmtPct } from '@/lib/format';
 import './dashboard.css';
 
@@ -65,7 +59,11 @@ export function DashboardPage() {
       if (offset >= 0 && offset < 7) days[offset] += shift.paid_hours;
     }
     const buckets = bucketWeek(days, effective.rules);
-    const rate = effectiveRate(effective.baseRate, effective.defaultDesignation, effective.premiums);
+    const rate = effectiveRate(
+      effective.baseRate,
+      effective.defaultDesignation,
+      effective.premiums,
+    );
     return {
       days,
       buckets,
@@ -119,11 +117,7 @@ export function DashboardPage() {
             {setupSteps.map((step) => (
               <li key={step.label} className={step.done ? 'ns-dash__setup--done' : ''}>
                 <span aria-hidden="true">{step.done ? '✓' : '○'}</span>
-                {step.done ? (
-                  <span>{step.label}</span>
-                ) : (
-                  <Link to={step.to}>{step.label}</Link>
-                )}
+                {step.done ? <span>{step.label}</span> : <Link to={step.to}>{step.label}</Link>}
               </li>
             ))}
           </ul>
@@ -270,9 +264,7 @@ export function DashboardPage() {
               value={`${subscription.documentParses.remaining ?? 0} of ${subscription.documentParses.limit}`}
               size="small"
               sub="Resets at the start of next month"
-              tone={
-                (subscription.documentParses.remaining ?? 0) <= 1 ? 'warning' : 'default'
-              }
+              tone={(subscription.documentParses.remaining ?? 0) <= 1 ? 'warning' : 'default'}
             />
           )}
           {subscription.inGracePeriod && (
@@ -293,8 +285,14 @@ export function DashboardPage() {
               <span>{formatIsoDate(stub.pay_date)}</span>
               <span className="tabular">{fmtMoney(stub.gross_pay)} gross</span>
               <span className="tabular">{fmtMoney(stub.net_pay)} take-home</span>
-              <Badge tone={stub.source === 'local' ? 'green' : stub.source === 'ai' ? 'blue' : 'neutral'}>
-                {stub.source === 'local' ? 'read locally' : stub.source === 'ai' ? 'AI-read' : 'by hand'}
+              <Badge
+                tone={stub.source === 'local' ? 'green' : stub.source === 'ai' ? 'blue' : 'neutral'}
+              >
+                {stub.source === 'local'
+                  ? 'read locally'
+                  : stub.source === 'ai'
+                    ? 'AI-read'
+                    : 'by hand'}
               </Badge>
             </div>
           ))}

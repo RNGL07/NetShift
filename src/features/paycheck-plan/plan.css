@@ -34,7 +34,10 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.ns-plan__period-date { font-size: 13px; font-weight: 500; }
+.ns-plan__period-date {
+  font-size: 13px;
+  font-weight: 500;
+}
 
 .ns-plan__add {
   padding: var(--space-4);

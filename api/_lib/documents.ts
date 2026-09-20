@@ -11,18 +11,9 @@
 import { maxDocumentBytes } from './env';
 import { ApiError } from './http';
 
-export type DocumentMediaType =
-  | 'application/pdf'
-  | 'image/jpeg'
-  | 'image/png'
-  | 'image/webp';
+export type DocumentMediaType = 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp';
 
-const ACCEPTED: DocumentMediaType[] = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-];
+const ACCEPTED: DocumentMediaType[] = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 
 export const ACCEPTED_MEDIA_TYPES: readonly string[] = ACCEPTED;
 
@@ -31,11 +22,23 @@ const MAGIC: Record<DocumentMediaType, (bytes: Uint8Array) => boolean> = {
   'application/pdf': (b) => b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46, // %PDF
   'image/jpeg': (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
   'image/png': (b) =>
-    b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 &&
-    b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a,
+    b[0] === 0x89 &&
+    b[1] === 0x50 &&
+    b[2] === 0x4e &&
+    b[3] === 0x47 &&
+    b[4] === 0x0d &&
+    b[5] === 0x0a &&
+    b[6] === 0x1a &&
+    b[7] === 0x0a,
   'image/webp': (b) =>
-    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && // RIFF
-    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50, // WEBP
+    b[0] === 0x52 &&
+    b[1] === 0x49 &&
+    b[2] === 0x46 &&
+    b[3] === 0x46 && // RIFF
+    b[8] === 0x57 &&
+    b[9] === 0x45 &&
+    b[10] === 0x42 &&
+    b[11] === 0x50, // WEBP
 };
 
 export interface ValidatedDocument {
@@ -118,20 +121,20 @@ export function validateDocument(input: {
 /** Builds the content block Anthropic expects for a validated document. */
 export function documentContentBlock(document: ValidatedDocument) {
   return document.isPdf
-    ? ({
+    ? {
         type: 'document' as const,
         source: {
           type: 'base64' as const,
           media_type: 'application/pdf' as const,
           data: document.base64,
         },
-      })
-    : ({
+      }
+    : {
         type: 'image' as const,
         source: {
           type: 'base64' as const,
           media_type: document.mediaType,
           data: document.base64,
         },
-      });
+      };
 }
