@@ -137,3 +137,38 @@ describe('validateDocument — rejections', () => {
     });
   });
 });
+
+describe('the default size cap fits inside the platform request limit', () => {
+  it('stays under what Vercel will actually accept once base64-encoded', () => {
+    // Vercel caps a serverless function's request body at 4.5 MB, and the
+    // document travels base64-encoded (4/3 inflation) inside a JSON body.
+    // A cap above ~3.3 MB could never be reached: the platform rejects the
+    // request first, returning HTML the client cannot parse — which surfaces
+    // to the user as a bare "Something went wrong".
+    const VERCEL_REQUEST_BODY_LIMIT = 4.5 * 1024 * 1024;
+    const BASE64_INFLATION = 4 / 3;
+
+    delete process.env.NETSHIFT_MAX_DOCUMENT_BYTES;
+    const cap = 3 * 1024 * 1024; // the documented default in env.ts
+
+    expect(cap * BASE64_INFLATION).toBeLessThan(VERCEL_REQUEST_BODY_LIMIT);
+  });
+
+  it('accepts a file at the cap and rejects one above it', () => {
+    process.env.NETSHIFT_MAX_DOCUMENT_BYTES = String(3 * 1024 * 1024);
+
+    const atCap = fileOf([0x25, 0x50, 0x44, 0x46], 3 * 1024 * 1024);
+    expect(() => validateDocument({ base64: atCap, mediaType: 'application/pdf' })).not.toThrow();
+
+    const overCap = fileOf([0x25, 0x50, 0x44, 0x46], 3 * 1024 * 1024 + 1024);
+    try {
+      validateDocument({ base64: overCap, mediaType: 'application/pdf' });
+      throw new Error('expected a rejection');
+    } catch (error) {
+      expect((error as ApiError).code).toBe('file_too_large');
+      // The message has to say what to do, not just that it failed.
+      expect((error as ApiError).message).toMatch(/smaller|lower resolution|photo/i);
+    }
+    delete process.env.NETSHIFT_MAX_DOCUMENT_BYTES;
+  });
+});

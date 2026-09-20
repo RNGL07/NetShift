@@ -24,6 +24,7 @@ export type ErrorCode =
   | 'extraction_failed'
   | 'not_found'
   | 'conflict'
+  | 'not_configured'
   | 'server_error';
 
 const STATUS_FOR: Record<ErrorCode, number> = {
@@ -40,6 +41,7 @@ const STATUS_FOR: Record<ErrorCode, number> = {
   extraction_failed: 422,
   not_found: 404,
   conflict: 409,
+  not_configured: 503,
   server_error: 500,
 };
 
@@ -132,6 +134,24 @@ export function withErrorHandling(scope: string, handler: Handler): Handler {
         fail(res, error.code, error.message, error.details);
         return;
       }
+
+      // A missing environment variable is an operator problem, not a user
+      // problem, and it needs to be distinguishable from a genuine crash.
+      // Reported as a generic 500 it is effectively undiagnosable: the user
+      // sees "something went wrong" and there is nothing to act on. The
+      // variable's NAME still stays server-side — the log has it.
+      if (error instanceof Error && error.name === 'ConfigurationError') {
+        logServerError(`${scope}.misconfigured`, error, {
+          variable: (error as { variable?: string }).variable ?? 'unknown',
+        });
+        fail(
+          res,
+          'not_configured',
+          'NetShift is missing part of its server configuration, so this feature is unavailable. This has been logged — please report it.',
+        );
+        return;
+      }
+
       logServerError(scope, error);
       if (!res.headersSent) {
         fail(res, 'server_error', 'Something went wrong on our side. Please try again.');

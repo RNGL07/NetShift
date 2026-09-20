@@ -213,12 +213,127 @@ export function parsePayStubText(text: string): {
   return { data, confidence: scorePayStub(data) };
 }
 
+/**
+ * Sanity-checks a locally parsed stub, clearing any field that cannot be right.
+ *
+ * This runs the same cross-field checks the server applies to AI output. It has
+ * to, because a stub read in the browser never reaches the server — so without
+ * these, a misread would be pre-filled into the save form, marked confident,
+ * and very likely accepted.
+ *
+ * The specific misread this exists for: on a stub whose earnings are printed
+ * as a table, the column header reads "Rate  Hours  This Period", and the
+ * first number on the row beneath it is the RATE. Matching the word "Hours"
+ * and taking the next number yields the hourly rate as the hours worked — a
+ * figure that looks plausible and quietly corrupts every overtime calculation,
+ * audit, and buffer estimate built on it.
+ *
+ * Mutates `data` in place and returns the reasons anything was cleared.
+ */
+function applySanityChecks(data: ParsedPayStub): string[] {
+  const reasons: string[] = [];
+
+  // Hours that equal the hourly rate are the table-header misread above.
+  if (
+    data.hoursWorked !== null &&
+    data.hourlyRate !== null &&
+    Math.abs(data.hoursWorked - data.hourlyRate) < 0.005
+  ) {
+    reasons.push('Hours worked and the hourly rate came out identical, so the hours were cleared.');
+    data.hoursWorked = null;
+  }
+
+  // An hourly rate and a period's hours each have a plausible band of their
+  // own. Checking those FIRST means the obvious misread — a rate of 4061 from
+  // "$40.61" with a lost decimal point — is caught on its own terms, without
+  // needing to arbitrate between two fields.
+  const PLAUSIBLE_RATE = { min: 1, max: 200 };
+  const PLAUSIBLE_HOURS = { min: 0.25, max: 400 };
+
+  if (
+    data.hourlyRate !== null &&
+    (data.hourlyRate < PLAUSIBLE_RATE.min || data.hourlyRate > PLAUSIBLE_RATE.max)
+  ) {
+    reasons.push('The hourly rate found is outside a believable range, so it was cleared.');
+    data.hourlyRate = null;
+  }
+
+  if (
+    data.hoursWorked !== null &&
+    (data.hoursWorked < PLAUSIBLE_HOURS.min || data.hoursWorked > PLAUSIBLE_HOURS.max)
+  ) {
+    reasons.push('The hours found are outside a believable range, so they were cleared.');
+    data.hoursWorked = null;
+  }
+
+  // Both are individually believable but disagree with the cheque. Gross is the
+  // most reliably labelled figure on a stub, so it arbitrates: whichever of
+  // hours-or-rate can be derived plausibly from gross is the one that survives.
+  // Clearing the good field instead would lose real data and leave the bad one
+  // in place.
+  if (data.hoursWorked !== null && data.hourlyRate !== null && data.grossPay) {
+    const impliedRate = data.hoursWorked > 0 ? data.grossPay / data.hoursWorked : 0;
+    const impliedHours = data.hourlyRate > 0 ? data.grossPay / data.hourlyRate : 0;
+
+    // Overtime lifts the true average rate above base, so this band is wide:
+    // it looks for an order-of-magnitude error, not a rounding one.
+    const consistent =
+      impliedRate > 0 && data.hourlyRate <= impliedRate * 5 && data.hourlyRate >= impliedRate / 5;
+
+    if (!consistent) {
+      const hoursLookRight = impliedRate >= PLAUSIBLE_RATE.min && impliedRate <= PLAUSIBLE_RATE.max;
+      const rateLooksRight =
+        impliedHours >= PLAUSIBLE_HOURS.min && impliedHours <= PLAUSIBLE_HOURS.max;
+
+      if (hoursLookRight && !rateLooksRight) {
+        reasons.push(
+          'The hourly rate does not fit the gross pay and hours shown, so it was cleared.',
+        );
+        data.hourlyRate = null;
+      } else if (rateLooksRight && !hoursLookRight) {
+        reasons.push(
+          'The hours found do not fit the gross pay and rate shown, so they were cleared.',
+        );
+        data.hoursWorked = null;
+      } else {
+        // Neither derivation is clearly right, so nothing is cleared — but the
+        // disagreement is surfaced for the user to resolve in the review form.
+        reasons.push(
+          'Hours, hourly rate and gross pay do not agree with each other — please check all three.',
+        );
+      }
+    }
+  }
+
+  // A period that ends before it starts means two dates were swapped.
+  if (data.periodStart !== null && data.periodEnd !== null && data.periodStart > data.periodEnd) {
+    reasons.push('The pay period ended before it started, so both dates were cleared.');
+    data.periodStart = null;
+    data.periodEnd = null;
+  }
+
+  // Broken-out hours that do not add up to the stated total mean one of them
+  // was read from a year-to-date column.
+  const brokenOut = [data.regularHours, data.overtimeHours].filter((h): h is number => h !== null);
+  if (data.hoursWorked !== null && brokenOut.length > 0) {
+    const sum = brokenOut.reduce((total, h) => total + h, 0);
+    if (sum > 0 && Math.abs(sum - data.hoursWorked) > 1) {
+      reasons.push('Regular and overtime hours do not add up to the total shown — please confirm.');
+    }
+  }
+
+  return reasons;
+}
+
 export function scorePayStub(data: ParsedPayStub): ParseConfidence {
+  // Clear impossible values before counting, so a cleared field is not
+  // reported as found.
+  const sanityReasons = applySanityChecks(data);
   const fieldsFound = Object.values(data).filter((v) => v !== null && v !== undefined).length;
   const coreFound = [data.grossPay, data.netPay].filter(
     (v) => v !== null && v !== undefined,
   ).length;
-  const reasons: string[] = [];
+  const reasons: string[] = [...sanityReasons];
 
   if (coreFound < 2) reasons.push('Gross pay and net pay could not both be found.');
 

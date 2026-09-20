@@ -73,9 +73,16 @@ export function aiModels() {
   };
 }
 
-/** Maximum accepted upload size, in bytes. Defaults to 8 MB. */
+/**
+ * Maximum accepted upload size, in bytes.
+ *
+ * Kept in step with the client's cap. Vercel limits a function's request body
+ * to 4.5 MB and the document arrives base64-encoded (4/3 inflation), so a cap
+ * above ~3.3 MB could never be reached anyway — the platform would reject the
+ * request first, with an HTML error the client cannot parse.
+ */
 export function maxDocumentBytes(): number {
-  return readEnvNumber('NETSHIFT_MAX_DOCUMENT_BYTES', 8 * 1024 * 1024);
+  return readEnvNumber('NETSHIFT_MAX_DOCUMENT_BYTES', 3 * 1024 * 1024);
 }
 
 /** Environment slice handed to `resolveAiLimits`, so limits stay configurable. */
