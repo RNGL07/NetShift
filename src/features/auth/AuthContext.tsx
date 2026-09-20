@@ -82,6 +82,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       if (event === 'PASSWORD_RECOVERY') setIsRecoveringPassword(true);
       if (event === 'SIGNED_OUT') setIsRecoveringPassword(false);
+
+      // Self-heal the rows a user needs. The signup trigger creates them, and
+      // migration 0013 backfilled everyone who predates it — but an account
+      // restored from a backup, or created while the trigger was absent, would
+      // otherwise have no profile row. Without one, Settings silently fails to
+      // save and the legacy-import flag never persists, which lets the import
+      // run twice and duplicate pay stubs.
+      //
+      // The RPC is idempotent and constrained to the caller's own id, so this
+      // is a cheap no-op in the normal case.
+      if (nextSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        void supabase.rpc('ensure_user_rows', { p_user_id: nextSession.user.id });
+      }
     });
 
     return () => {

@@ -20,7 +20,28 @@ import './document-upload.css';
 export type UploadKind = 'paystub' | 'wage-sheet';
 
 const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp';
-const MAX_CLIENT_BYTES = 8 * 1024 * 1024;
+
+/**
+ * The largest file that can actually reach the parsing endpoint.
+ *
+ * Vercel caps a serverless function's REQUEST BODY at 4.5 MB. The document is
+ * sent as base64 inside a JSON body, and base64 inflates by 4/3 — so the true
+ * ceiling on the raw file is about 3.3 MB, not 4.5 MB.
+ *
+ * This previously allowed 8 MB. Anything above roughly 3.3 MB was rejected by
+ * the platform before the function ran, which returns an HTML error page
+ * rather than JSON. The client could not parse that, so it fell back to its
+ * generic message and the user saw "Something went wrong" with no indication
+ * that the file was simply too big.
+ *
+ * 3 MB leaves headroom for the JSON envelope and keeps the failure mode a
+ * clear, actionable message instead of an opaque one.
+ */
+const VERCEL_REQUEST_BODY_LIMIT = 4.5 * 1024 * 1024;
+const BASE64_INFLATION = 4 / 3;
+/** Rough ceiling on the raw file, derived from the two figures above. */
+const MAX_RAW_BYTES_FOR_UPLOAD = Math.floor(VERCEL_REQUEST_BODY_LIMIT / BASE64_INFLATION);
+const MAX_CLIENT_BYTES = Math.min(3 * 1024 * 1024, MAX_RAW_BYTES_FOR_UPLOAD);
 
 export interface ParseOutcome<T> {
   data: T;
@@ -62,9 +83,14 @@ export function DocumentUpload<T>({
     setError(null);
     setNotice(null);
 
+    // Checked here rather than only on the server, because a body over the
+    // platform limit never reaches the server at all.
     if (file.size > MAX_CLIENT_BYTES) {
+      const megabytes = (file.size / 1024 / 1024).toFixed(1);
       setError(
-        `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is 8 MB — try a smaller scan, or photograph the stub instead.`,
+        isPdf(file)
+          ? `That PDF is ${megabytes} MB, and ${(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB is the most that can be sent for transcribing. If it came from a payroll portal, NetShift can usually read it here in your browser with no size limit at all — a scanned PDF is what tends to be this large. Otherwise try exporting it at a lower resolution, or photograph the page instead.`
+          : `That image is ${megabytes} MB. The limit is ${(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB — most phone cameras let you send a smaller version, or you can screenshot the page instead.`,
       );
       return;
     }
@@ -102,6 +128,15 @@ export function DocumentUpload<T>({
 
       setBusy('uploading');
       const base64 = await fileToBase64(file);
+
+      // Belt and braces: the platform measures the encoded body, so verify the
+      // real payload rather than trusting the raw-size estimate.
+      if (base64.length > VERCEL_REQUEST_BODY_LIMIT * 0.98) {
+        setError(
+          `That file is too large to send for transcribing once encoded (${(base64.length / 1024 / 1024).toFixed(1)} MB). Try a lower-resolution scan or a photograph of the page.`,
+        );
+        return;
+      }
       const response = await apiRequest<{
         data: T;
         issues: { field: string; message: string }[];
@@ -151,7 +186,9 @@ export function DocumentUpload<T>({
           </span>
           <span className="ns-upload__title">{label}</span>
           <span className="ns-upload__desc">{description}</span>
-          <span className="ns-upload__formats">PDF, JPEG, PNG, or WebP · up to 8 MB</span>
+          <span className="ns-upload__formats">
+            PDF, JPEG, PNG, or WebP · up to {(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB
+          </span>
         </label>
 
         {busy && (

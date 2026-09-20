@@ -23,6 +23,7 @@ export type ApiErrorCode =
   | 'extraction_failed'
   | 'not_found'
   | 'conflict'
+  | 'not_configured'
   | 'server_error'
   | 'network_error';
 

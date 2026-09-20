@@ -104,3 +104,6 @@ echo "==> Verifying every user-owned table has RLS enabled"
 
 echo
 echo "Database checks passed."
+echo
+echo "==> Running the production upgrade simulation (live 1.x data -> 2.x)"
+bash "$ROOT/scripts/upgrade-test.sh"
