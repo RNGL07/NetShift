@@ -1,0 +1,38 @@
+{
+  // ---------------------------------------------------------------------------
+  // Type-checks api/** the way Vercel actually runs it.
+  //
+  // package.json sets "type": "module", so everything under api/ is loaded as
+  // real Node ESM. Node ESM requires a file extension on every relative import
+  // — `./env` does not resolve, only `./env.js` does.
+  //
+  // The main tsconfig uses "moduleResolution": "bundler", which is correct for
+  // the Vite app but deliberately permits extensionless imports. That gap is
+  // how a build can pass every local check and still fail at runtime on Vercel
+  // with ERR_MODULE_NOT_FOUND — which is exactly what happened.
+  //
+  // "NodeNext" here makes tsc enforce the same rule Node does, so the mistake
+  // becomes a failed typecheck instead of a failed deploy.
+  // ---------------------------------------------------------------------------
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"]
+  },
+  // The api/ tree plus the one src module it reaches.
+  "include": ["api/**/*.ts", "src/config/plans.ts"],
+  "exclude": ["api/**/*.test.ts", "api/_test/**"]
+}
