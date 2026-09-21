@@ -101,3 +101,76 @@ describe('withErrorHandling', () => {
     expect(errorCode(captured)).toBe('not_configured');
   });
 });
+
+describe('error references', () => {
+  /** Pulls the ref out of every JSON line the handler logged. */
+  function loggedRefs(): string[] {
+    const spy = console.error as unknown as { mock: { calls: unknown[][] } };
+    return spy.mock.calls
+      .map(([line]) => {
+        try {
+          return (JSON.parse(String(line)) as { ref?: string }).ref;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((ref): ref is string => typeof ref === 'string');
+  }
+
+  it('gives a crash a reference that appears in both the response and the log', async () => {
+    // The whole point: "something went wrong" with nothing to quote leaves the
+    // real cause sitting in a log nobody can connect to the report.
+    const handler = withErrorHandling('test', async () => {
+      throw new Error('something internal broke');
+    });
+    const { res, captured } = createResponse();
+    await handler(createRequest(), res);
+
+    expect(captured.statusCode).toBe(500);
+    expect(errorCode(captured)).toBe('server_error');
+
+    const ref = (captured.body as { error: { details?: { ref?: string } } }).error.details?.ref;
+    expect(ref).toMatch(/^[0-9a-f]{8}$/);
+    // Shown to the user, so it can be read back without opening dev tools.
+    expect(JSON.stringify(captured.body)).toContain(ref);
+    // And written to the log, so the reference actually leads somewhere.
+    expect(loggedRefs()).toContain(ref);
+  });
+
+  it('gives a configuration failure a reference too', async () => {
+    const handler = withErrorHandling('test', async () => {
+      requireEnv('DEFINITELY_NOT_SET_ANYWHERE');
+    });
+    const { res, captured } = createResponse();
+    await handler(createRequest(), res);
+
+    const ref = (captured.body as { error: { details?: { ref?: string } } }).error.details?.ref;
+    expect(ref).toMatch(/^[0-9a-f]{8}$/);
+    expect(loggedRefs()).toContain(ref);
+  });
+
+  it('still leaks nothing internal alongside the reference', async () => {
+    const handler = withErrorHandling('test', async () => {
+      throw new Error('connection to db-prod-7 refused: password authentication failed');
+    });
+    const { res, captured } = createResponse();
+    await handler(createRequest(), res);
+
+    const serialised = JSON.stringify(captured.body);
+    expect(serialised).not.toContain('db-prod-7');
+    expect(serialised).not.toContain('password');
+  });
+
+  it('gives each request its own reference', async () => {
+    const handler = withErrorHandling('test', async () => {
+      throw new Error('boom');
+    });
+    const refs: (string | undefined)[] = [];
+    for (let i = 0; i < 2; i++) {
+      const { res, captured } = createResponse();
+      await handler(createRequest(), res);
+      refs.push((captured.body as { error: { details?: { ref?: string } } }).error.details?.ref);
+    }
+    expect(refs[0]).not.toBe(refs[1]);
+  });
+});

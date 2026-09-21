@@ -8,6 +8,7 @@
  * cannot be forgotten in one handler.
  */
 
+import { randomBytes } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export type ErrorCode =
@@ -119,6 +120,21 @@ export function logServerError(
   );
 }
 
+/**
+ * A short reference shared between the log line and the user's screen.
+ *
+ * Without one, a 500 is undiagnosable from the outside: the user reports
+ * "something went wrong", the log holds the real cause, and nothing connects
+ * the two. Eight hex characters is enough to find a single line in a day of
+ * logs and short enough to read down a phone.
+ *
+ * It is random, not derived from anything about the user or the request, so it
+ * reveals nothing by being shown.
+ */
+function errorRef(): string {
+  return randomBytes(4).toString('hex');
+}
+
 type Handler = (req: VercelRequest, res: VercelResponse) => Promise<void> | void;
 
 /**
@@ -140,21 +156,30 @@ export function withErrorHandling(scope: string, handler: Handler): Handler {
       // Reported as a generic 500 it is effectively undiagnosable: the user
       // sees "something went wrong" and there is nothing to act on. The
       // variable's NAME still stays server-side — the log has it.
+      const ref = errorRef();
+
       if (error instanceof Error && error.name === 'ConfigurationError') {
         logServerError(`${scope}.misconfigured`, error, {
+          ref,
           variable: (error as { variable?: string }).variable ?? 'unknown',
         });
         fail(
           res,
           'not_configured',
-          'NetShift is missing part of its server configuration, so this feature is unavailable. This has been logged — please report it.',
+          `NetShift is missing part of its server configuration, so this feature is unavailable. Please report reference ${ref}.`,
+          { ref },
         );
         return;
       }
 
-      logServerError(scope, error);
+      logServerError(scope, error, { ref });
       if (!res.headersSent) {
-        fail(res, 'server_error', 'Something went wrong on our side. Please try again.');
+        fail(
+          res,
+          'server_error',
+          `Something went wrong on our side. Please try again, and if it keeps happening report reference ${ref}.`,
+          { ref },
+        );
       }
     }
   };
