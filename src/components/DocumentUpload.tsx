@@ -4,15 +4,27 @@
  * The order matters for both cost and privacy: a PDF exported from a payroll
  * portal has a real text layer, which is read **in the browser**. Nothing is
  * uploaded, nothing is sent to an AI provider, and no allowance is spent. Only
- * a photo, a scan, or a low-confidence local parse falls through to the server.
+ * a photo, a screenshot, a scan, or a low-confidence local parse falls through
+ * to the server.
+ *
+ * There is no file size limit to speak of. Vercel caps a function's request
+ * body at 4.5 MB, but rather than refusing anything bigger, `prepareForUpload`
+ * shrinks it to fit: a photo is scaled to the resolution the model actually
+ * reads at, and a large PDF is rendered to page images. What that costs is
+ * spelled out on screen, because shrinking a document should never happen
+ * behind the user's back.
+ *
+ * A screenshot can be pasted straight in with Ctrl/Cmd-V or dropped on the
+ * box — for most payroll portals that is faster than saving a file first.
  *
  * The privacy notice is shown before the file picker, not after, and it says
  * plainly which path a file will take.
  */
 
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { Button, Callout, ErrorMessage, Spinner } from '@/components/ui';
-import { extractPdfTextLayer, fileToBase64, isPdf } from '@/lib/parsing/pdfText';
+import { extractPdfTextLayer, isPdf } from '@/lib/parsing/pdfText';
+import { DocumentPrepError, prepareForUpload } from '@/lib/parsing/documentPrep';
 import { apiRequest, ApiClientError } from '@/lib/api/client';
 import { useEntitlement } from '@/features/billing/EntitlementContext';
 import './document-upload.css';
@@ -20,28 +32,7 @@ import './document-upload.css';
 export type UploadKind = 'paystub' | 'wage-sheet';
 
 const ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp';
-
-/**
- * The largest file that can actually reach the parsing endpoint.
- *
- * Vercel caps a serverless function's REQUEST BODY at 4.5 MB. The document is
- * sent as base64 inside a JSON body, and base64 inflates by 4/3 — so the true
- * ceiling on the raw file is about 3.3 MB, not 4.5 MB.
- *
- * This previously allowed 8 MB. Anything above roughly 3.3 MB was rejected by
- * the platform before the function ran, which returns an HTML error page
- * rather than JSON. The client could not parse that, so it fell back to its
- * generic message and the user saw "Something went wrong" with no indication
- * that the file was simply too big.
- *
- * 3 MB leaves headroom for the JSON envelope and keeps the failure mode a
- * clear, actionable message instead of an opaque one.
- */
-const VERCEL_REQUEST_BODY_LIMIT = 4.5 * 1024 * 1024;
-const BASE64_INFLATION = 4 / 3;
-/** Rough ceiling on the raw file, derived from the two figures above. */
-const MAX_RAW_BYTES_FOR_UPLOAD = Math.floor(VERCEL_REQUEST_BODY_LIMIT / BASE64_INFLATION);
-const MAX_CLIENT_BYTES = Math.min(3 * 1024 * 1024, MAX_RAW_BYTES_FOR_UPLOAD);
+const ACCEPTED_TYPES = new Set(ACCEPT.split(','));
 
 export interface ParseOutcome<T> {
   data: T;
@@ -67,35 +58,68 @@ export function DocumentUpload<T>({
 }) {
   const { subscription, refresh } = useEntitlement();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = useState<'reading' | 'uploading' | null>(null);
+  const [busy, setBusy] = useState<'reading' | 'preparing' | 'uploading' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
 
   const endpoint = kind === 'paystub' ? '/api/ai/parse-paystub' : '/api/ai/parse-wage-sheet';
   const parses = subscription.documentParses;
   const allowanceSpent = parses.remaining !== null && parses.remaining <= 0;
 
-  async function handleFile(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (inputRef.current) inputRef.current.value = '';
-    if (!file) return;
+  // A screenshot on the clipboard has no file on disk, so pasting is the
+  // shortest path from a payroll portal to a parsed stub. The listener is on
+  // the document because the paste target is wherever the caret happens to be,
+  // and it steps aside for a real text field so it cannot eat a normal paste.
+  useEffect(() => {
+    if (busy !== null) return undefined;
 
-    setError(null);
-    setNotice(null);
+    function onPaste(event: ClipboardEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('input, textarea, [contenteditable="true"]')) return;
 
-    // Checked here rather than only on the server, because a body over the
-    // platform limit never reaches the server at all.
-    if (file.size > MAX_CLIENT_BYTES) {
-      const megabytes = (file.size / 1024 / 1024).toFixed(1);
-      setError(
-        isPdf(file)
-          ? `That PDF is ${megabytes} MB, and ${(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB is the most that can be sent for transcribing. If it came from a payroll portal, NetShift can usually read it here in your browser with no size limit at all — a scanned PDF is what tends to be this large. Otherwise try exporting it at a lower resolution, or photograph the page instead.`
-          : `That image is ${megabytes} MB. The limit is ${(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB — most phone cameras let you send a smaller version, or you can screenshot the page instead.`,
-      );
-      return;
+      const items = event.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.kind !== 'file') continue;
+        const file = item.getAsFile();
+        if (!file || !ACCEPTED_TYPES.has(file.type)) continue;
+        event.preventDefault();
+        setNotice(null);
+        void readFile(file, false);
+        return;
+      }
     }
 
-    await readFile(file, false);
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+    // readFile is stable for the life of a render pass and only reads state
+    // that is re-read on each call.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busy, allowanceSpent, endpoint]);
+
+  function accept(file: File | null | undefined) {
+    if (!file) return;
+    setError(null);
+    setNotice(null);
+    if (!ACCEPTED_TYPES.has(file.type)) {
+      setError('That file type is not supported. Use a PDF, JPEG, PNG, or WebP.');
+      return;
+    }
+    void readFile(file, false);
+  }
+
+  function handleFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (inputRef.current) inputRef.current.value = '';
+    accept(file);
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    if (busy !== null) return;
+    accept(event.dataTransfer.files?.[0]);
   }
 
   async function readFile(file: File, forceAi: boolean) {
@@ -104,6 +128,9 @@ export function DocumentUpload<T>({
 
     try {
       // --- Local path: free, private, no upload ---------------------------
+      // Tried on any PDF regardless of size: reading the text layer happens
+      // entirely in the browser, so a 50 MB payroll export costs nothing and
+      // never leaves the machine.
       if (!forceAi && isPdf(file)) {
         const text = await extractPdfTextLayer(file);
         if (text) {
@@ -126,29 +153,23 @@ export function DocumentUpload<T>({
         return;
       }
 
-      setBusy('uploading');
-      const base64 = await fileToBase64(file);
+      setBusy('preparing');
+      const prepared = await prepareForUpload(file);
 
-      // Belt and braces: the platform measures the encoded body, so verify the
-      // real payload rather than trusting the raw-size estimate.
-      if (base64.length > VERCEL_REQUEST_BODY_LIMIT * 0.98) {
-        setError(
-          `That file is too large to send for transcribing once encoded (${(base64.length / 1024 / 1024).toFixed(1)} MB). Try a lower-resolution scan or a photograph of the page.`,
-        );
-        return;
-      }
+      setBusy('uploading');
       const response = await apiRequest<{
         data: T;
         issues: { field: string; message: string }[];
       }>(endpoint, {
-        body: { base64, mediaType: file.type },
+        body: { pages: prepared.pages },
       });
 
       onParsed({ data: response.data, source: 'ai', issues: response.issues ?? [], file });
+      if (prepared.note) setNotice(prepared.note);
       // The allowance just changed, so the counter shown on screen should too.
       void refresh();
     } catch (caught) {
-      if (caught instanceof ApiClientError) {
+      if (caught instanceof DocumentPrepError || caught instanceof ApiClientError) {
         setError(caught.message);
       } else {
         setError(
@@ -164,20 +185,28 @@ export function DocumentUpload<T>({
     <div className="ns-upload">
       <Callout tone="neutral" icon="i">
         <strong>How your document is read.</strong> A PDF downloaded from a payroll portal is read{' '}
-        <strong>inside your browser</strong> — it is never uploaded and costs nothing. A photo or a
-        scan has no text to read, so it is sent to Anthropic&rsquo;s AI service to be transcribed,
-        which uses one of your monthly parses. NetShift stores the figures, not the document, and
-        deletes the file as soon as it has been read.
+        <strong>inside your browser</strong> — it is never uploaded and costs nothing, at any size.
+        A photo, screenshot, or scan has no text to read, so it is sent to Anthropic&rsquo;s AI
+        service to be transcribed, which uses one of your monthly parses. NetShift stores the
+        figures, not the document, and deletes the file as soon as it has been read.
       </Callout>
 
-      <div className="ns-upload__box">
+      <div
+        className={`ns-upload__box${dragging ? ' ns-upload__box--dragging' : ''}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (busy === null) setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={handleDrop}
+      >
         <input
           ref={inputRef}
           type="file"
           accept={ACCEPT}
           id={`upload-${kind}`}
           className="sr-only"
-          onChange={(event) => void handleFile(event)}
+          onChange={handleFile}
           disabled={busy !== null}
         />
         <label htmlFor={`upload-${kind}`} className="ns-upload__label">
@@ -187,7 +216,8 @@ export function DocumentUpload<T>({
           <span className="ns-upload__title">{label}</span>
           <span className="ns-upload__desc">{description}</span>
           <span className="ns-upload__formats">
-            PDF, JPEG, PNG, or WebP · up to {(MAX_CLIENT_BYTES / 1024 / 1024).toFixed(0)} MB
+            PDF, JPEG, PNG, or WebP — any size. Drop a file here, or paste a screenshot with
+            Ctrl&#8209;V.
           </span>
         </label>
 
@@ -197,7 +227,9 @@ export function DocumentUpload<T>({
             <span>
               {busy === 'reading'
                 ? 'Reading the document in your browser…'
-                : 'Sending to be transcribed…'}
+                : busy === 'preparing'
+                  ? 'Preparing the document…'
+                  : 'Sending to be transcribed…'}
             </span>
           </div>
         )}
@@ -246,14 +278,18 @@ export function RetryWithAi({
           setBusy(true);
           setError(null);
           try {
-            const base64 = await fileToBase64(file);
+            const prepared = await prepareForUpload(file);
             const response = await apiRequest<{
               data: unknown;
               issues: { field: string; message: string }[];
-            }>(endpoint, { body: { base64, mediaType: file.type } });
+            }>(endpoint, { body: { pages: prepared.pages } });
             onParsed({ data: response.data, issues: response.issues ?? [] });
           } catch (caught) {
-            setError(caught instanceof ApiClientError ? caught.message : 'That did not work.');
+            setError(
+              caught instanceof DocumentPrepError || caught instanceof ApiClientError
+                ? caught.message
+                : 'That did not work.',
+            );
           } finally {
             setBusy(false);
           }

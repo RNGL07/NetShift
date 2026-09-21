@@ -32,6 +32,11 @@
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
+/* Dropping a file is the same gesture as picking one, so it reads the same. */
+.ns-upload__box--dragging .ns-upload__label {
+  border-color: var(--amber);
+  background: var(--panel-3);
+}
 
 .ns-upload__icon {
   font-size: 26px;
@@ -52,6 +57,8 @@
   font-size: 11px;
   color: var(--text-faint);
   margin-top: var(--space-1);
+  max-width: 46ch;
+  line-height: 1.6;
 }
 
 .ns-upload__busy {

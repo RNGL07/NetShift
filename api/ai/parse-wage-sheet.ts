@@ -14,7 +14,7 @@ import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
 import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
 import { claimAiUsage, getEntitlement, recordAiUsage } from '../_lib/entitlements.js';
 import { callAnthropic, parseJsonResponse } from '../_lib/anthropic.js';
-import { documentContentBlock, validateDocument } from '../_lib/documents.js';
+import { documentContentBlocks, validateDocumentSet } from '../_lib/documents.js';
 import { validateWageSheet } from '../_lib/validation.js';
 
 const SYSTEM_PROMPT = [
@@ -30,6 +30,8 @@ const SYSTEM_PROMPT = [
   '- Premiums are PER HOUR. If a figure is weekly or annual, return null rather than converting.',
   '- Rates are plain numbers: no currency symbols, no thousands separators.',
   '- Use null or an empty array for anything not present. Never estimate.',
+  '- A large document arrives as several labelled page images. Treat them as one document,',
+  '  in the order given, and merge what you find across them.',
 ].join('\n');
 
 export default withErrorHandling(
@@ -41,7 +43,7 @@ export default withErrorHandling(
     const user = await requireUser(req);
     await consumeRateLimit(user.id, AI_RATE_LIMIT);
 
-    const document = validateDocument((req.body ?? {}) as Record<string, unknown>);
+    const documents = validateDocumentSet((req.body ?? {}) as Record<string, unknown>);
 
     const entitlement = await getEntitlement(user.id);
     const claim = await claimAiUsage(user.id, entitlement.tier, 'parse_wage_sheet');
@@ -56,7 +58,7 @@ export default withErrorHandling(
         system: SYSTEM_PROMPT,
         temperature: 0,
         content: [
-          documentContentBlock(document),
+          ...documentContentBlocks(documents),
           { type: 'text', text: 'Extract this wage document as JSON per the schema.' },
         ],
       });
