@@ -61,7 +61,14 @@ Report only present/missing — never paste values.
 
 `APP_URL` (set it if you use a custom domain — otherwise Vercel's own URL is
 used for Stripe return links), `STRIPE_TRIAL_DAYS`, `ANTHROPIC_*_MODEL`,
-`NETSHIFT_*_MONTHLY_*` allowances, `NETSHIFT_MAX_DOCUMENT_BYTES`.
+`NETSHIFT_*_MONTHLY_*` allowances, `NETSHIFT_MAX_DOCUMENT_BYTES`,
+`NETSHIFT_MAX_DOCUMENT_TOTAL_BYTES`, `NETSHIFT_MAX_DOCUMENT_PAGES`.
+
+The three document variables bound what _arrives_, not what a user may upload:
+the browser shrinks a large photo and renders a large PDF to page images before
+sending, so the file on disk can be far bigger. Raising them past roughly
+3.3 MB per page or 4 MB in total achieves nothing — Vercel rejects a request
+body over 4.5 MB before the function runs.
 
 `VITE_STRIPE_PUBLISHABLE_KEY` is **not needed** — checkout is a redirect.
 

@@ -74,15 +74,43 @@ export function aiModels() {
 }
 
 /**
- * Maximum accepted upload size, in bytes.
+ * Maximum accepted size for a single page, in bytes.
  *
- * Kept in step with the client's cap. Vercel limits a function's request body
- * to 4.5 MB and the document arrives base64-encoded (4/3 inflation), so a cap
- * above ~3.3 MB could never be reached anyway — the platform would reject the
- * request first, with an HTML error the client cannot parse.
+ * Vercel limits a function's request body to 4.5 MB and pages arrive
+ * base64-encoded (4/3 inflation), so a per-page cap above ~3.3 MB could never
+ * be reached anyway — the platform would reject the request first, with an
+ * HTML error the client cannot parse.
+ *
+ * This is not the limit on what a user may upload. The browser shrinks a large
+ * photo and renders a large PDF to page images before sending, so the file on
+ * disk can be far bigger than this; what this bounds is one page of what
+ * actually arrives.
  */
 export function maxDocumentBytes(): number {
   return readEnvNumber('NETSHIFT_MAX_DOCUMENT_BYTES', 3 * 1024 * 1024);
+}
+
+/**
+ * Maximum combined decoded size of all pages in one request.
+ *
+ * Below the per-page cap times the page count on purpose: the real ceiling is
+ * the platform's 4.5 MB body limit, which the encoded payload has to fit
+ * inside. This is the server's own backstop against a client that ignores it.
+ */
+export function maxDocumentTotalBytes(): number {
+  return readEnvNumber('NETSHIFT_MAX_DOCUMENT_TOTAL_BYTES', 4 * 1024 * 1024);
+}
+
+/**
+ * Maximum number of pages accepted in one request.
+ *
+ * A pay stub is one or two pages and a wage scale rarely more than a few, so
+ * this is generous for real documents while keeping one allowance-spending
+ * request from becoming an unbounded upload. Kept at or above the client's own
+ * page cap, or the browser would build requests the server then rejects.
+ */
+export function maxDocumentPages(): number {
+  return readEnvNumber('NETSHIFT_MAX_DOCUMENT_PAGES', 8);
 }
 
 /** Environment slice handed to `resolveAiLimits`, so limits stay configurable. */

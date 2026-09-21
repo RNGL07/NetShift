@@ -12,20 +12,29 @@ const MIN_TEXT_LAYER_CHARS = 40;
 type PdfTextItem = { str?: string; transform?: number[] };
 
 /**
+ * Opens a PDF with pdf.js, wiring up the worker.
+ *
+ * Shared by the text-layer reader and the page rasteriser so the worker URL is
+ * resolved in exactly one place — Vite rewrites it to a real asset URL at build
+ * time, and without it pdf.js silently hangs instead of failing.
+ */
+export async function openPdf(file: File | Blob) {
+  const pdfjs = await import('pdfjs-dist');
+  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+
+  const buffer = await file.arrayBuffer();
+  return pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+}
+
+/**
  * Returns the PDF's text layer as newline-separated lines, with the items on
  * each visual row joined in reading order, or `null` when there is no usable
  * text layer — the caller reads `null` as "this needs the AI path".
  */
 export async function extractPdfTextLayer(file: File | Blob): Promise<string | null> {
   try {
-    const pdfjs = await import('pdfjs-dist');
-    // The worker is bundled by Vite and resolved to a real URL at build time;
-    // without this pdf.js silently hangs on getTextContent().
-    const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-
-    const buffer = await file.arrayBuffer();
-    const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
+    const pdf = await openPdf(file);
 
     const lines: string[] = [];
     for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {

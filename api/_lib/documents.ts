@@ -8,7 +8,7 @@
  * actually accept.
  */
 
-import { maxDocumentBytes } from './env.js';
+import { maxDocumentBytes, maxDocumentPages, maxDocumentTotalBytes } from './env.js';
 import { ApiError } from './http.js';
 
 export type DocumentMediaType = 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp';
@@ -137,4 +137,74 @@ export function documentContentBlock(document: ValidatedDocument) {
           data: document.base64,
         },
       };
+}
+
+/**
+ * Validates a document that may arrive as several pages.
+ *
+ * A file too large to send whole is split by the browser into page images, so
+ * the request body carries a `pages` array instead of a single document. The
+ * older single-document shape is still accepted, because a client that has not
+ * reloaded since the last deploy still sends it, and because the
+ * "read it with AI instead" retry has only ever had one file to send.
+ *
+ * Every page is validated exactly as a lone document is — declared type on the
+ * allow-list, magic bytes matching that type, size within the per-document cap
+ * — and the set additionally has a page count and a combined size limit, so a
+ * caller cannot turn one allowance-spending request into an unbounded upload.
+ */
+export function validateDocumentSet(input: Record<string, unknown>): ValidatedDocument[] {
+  const raw = input.pages;
+
+  if (raw === undefined || raw === null) {
+    return [validateDocument(input as { base64?: unknown; mediaType?: unknown })];
+  }
+  if (!Array.isArray(raw) || raw.length === 0) {
+    throw new ApiError('invalid_request', 'No document was included in the request.');
+  }
+
+  const pageLimit = maxDocumentPages();
+  if (raw.length > pageLimit) {
+    throw new ApiError(
+      'invalid_request',
+      `That document has ${raw.length} pages and ${pageLimit} is the most that can be read at once. Split the file and upload the part with the figures on it.`,
+      { limitPages: pageLimit, actualPages: raw.length },
+    );
+  }
+
+  const pages = raw.map((page) => {
+    if (typeof page !== 'object' || page === null) {
+      throw new ApiError('invalid_request', 'The uploaded document could not be read.');
+    }
+    return validateDocument(page as { base64?: unknown; mediaType?: unknown });
+  });
+
+  const totalBytes = pages.reduce((sum, page) => sum + page.byteLength, 0);
+  const totalLimit = maxDocumentTotalBytes();
+  if (totalBytes > totalLimit) {
+    throw new ApiError(
+      'file_too_large',
+      `Those pages come to ${(totalBytes / 1024 / 1024).toFixed(1)} MB together, and the limit is ${(totalLimit / 1024 / 1024).toFixed(0)} MB. Upload fewer pages at a time.`,
+      { limitBytes: totalLimit, actualBytes: totalBytes },
+    );
+  }
+
+  return pages;
+}
+
+/**
+ * Builds the content blocks for a document set, labelling each page.
+ *
+ * The label matters: without it a two-page stub reads as two unrelated
+ * documents, and the model has no way to say which figure came from which page.
+ */
+export function documentContentBlocks(
+  documents: ValidatedDocument[],
+): ({ type: 'text'; text: string } | ReturnType<typeof documentContentBlock>)[] {
+  if (documents.length === 1) return [documentContentBlock(documents[0])];
+
+  return documents.flatMap((document, index) => [
+    { type: 'text' as const, text: `Page ${index + 1} of ${documents.length}:` },
+    documentContentBlock(document),
+  ]);
 }

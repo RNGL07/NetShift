@@ -1,5 +1,10 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { ACCEPTED_MEDIA_TYPES, validateDocument } from './documents.js';
+import {
+  ACCEPTED_MEDIA_TYPES,
+  documentContentBlocks,
+  validateDocument,
+  validateDocumentSet,
+} from './documents.js';
 import { ApiError } from './http.js';
 
 /** Builds a base64 payload whose leading bytes match a real file signature. */
@@ -170,5 +175,134 @@ describe('the default size cap fits inside the platform request limit', () => {
       expect((error as ApiError).message).toMatch(/smaller|lower resolution|photo/i);
     }
     delete process.env.NETSHIFT_MAX_DOCUMENT_BYTES;
+  });
+});
+
+describe('validateDocumentSet — multi-page uploads', () => {
+  const expectError = (fn: () => unknown, code: string) => {
+    try {
+      fn();
+      throw new Error('expected a rejection');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).code).toBe(code);
+    }
+  };
+
+  afterEach(() => {
+    delete process.env.NETSHIFT_MAX_DOCUMENT_PAGES;
+    delete process.env.NETSHIFT_MAX_DOCUMENT_TOTAL_BYTES;
+    delete process.env.NETSHIFT_MAX_DOCUMENT_BYTES;
+  });
+
+  it('accepts a set of page images', () => {
+    const pages = validateDocumentSet({
+      pages: [
+        { base64: JPEG, mediaType: 'image/jpeg' },
+        { base64: JPEG, mediaType: 'image/jpeg' },
+      ],
+    });
+    expect(pages).toHaveLength(2);
+    expect(pages.every((page) => page.isPdf === false)).toBe(true);
+  });
+
+  it('still accepts the single-document shape', () => {
+    // A browser tab open since before the deploy sends this, and so does the
+    // "read it with AI instead" retry. Breaking it would break those users.
+    const pages = validateDocumentSet({ base64: PDF, mediaType: 'application/pdf' });
+    expect(pages).toHaveLength(1);
+    expect(pages[0].isPdf).toBe(true);
+  });
+
+  it('applies the same content check to every page, not just the first', () => {
+    // The whole point of magic-byte validation is lost if a second page can
+    // smuggle through something the first page's type vouched for.
+    expectError(
+      () =>
+        validateDocumentSet({
+          pages: [
+            { base64: JPEG, mediaType: 'image/jpeg' },
+            { base64: PDF, mediaType: 'image/jpeg' },
+          ],
+        }),
+      'unsupported_file_type',
+    );
+  });
+
+  it('rejects an empty or malformed pages array', () => {
+    expectError(() => validateDocumentSet({ pages: [] }), 'invalid_request');
+    expectError(() => validateDocumentSet({ pages: 'nope' }), 'invalid_request');
+    expectError(() => validateDocumentSet({ pages: [null] }), 'invalid_request');
+  });
+
+  it('rejects more pages than the limit allows', () => {
+    process.env.NETSHIFT_MAX_DOCUMENT_PAGES = '2';
+    expectError(
+      () =>
+        validateDocumentSet({
+          pages: [
+            { base64: JPEG, mediaType: 'image/jpeg' },
+            { base64: JPEG, mediaType: 'image/jpeg' },
+            { base64: JPEG, mediaType: 'image/jpeg' },
+          ],
+        }),
+      'invalid_request',
+    );
+  });
+
+  it('rejects pages that are individually fine but too large together', () => {
+    // Without a combined cap, the per-page limit multiplied by the page count
+    // would let a request through that the platform rejects before it arrives.
+    process.env.NETSHIFT_MAX_DOCUMENT_BYTES = '4096';
+    process.env.NETSHIFT_MAX_DOCUMENT_TOTAL_BYTES = '6144';
+    const page = fileOf([0xff, 0xd8, 0xff], 4096);
+    expect(() =>
+      validateDocumentSet({ pages: [{ base64: page, mediaType: 'image/jpeg' }] }),
+    ).not.toThrow();
+    expectError(
+      () =>
+        validateDocumentSet({
+          pages: [
+            { base64: page, mediaType: 'image/jpeg' },
+            { base64: page, mediaType: 'image/jpeg' },
+          ],
+        }),
+      'file_too_large',
+    );
+  });
+
+  it('keeps the combined cap inside the platform request limit', () => {
+    const VERCEL_REQUEST_BODY_LIMIT = 4.5 * 1024 * 1024;
+    const BASE64_INFLATION = 4 / 3;
+    // The documented default in env.ts. Encoded, it has to fit in a body the
+    // platform will actually accept.
+    const total = 4 * 1024 * 1024;
+    expect(total * BASE64_INFLATION).toBeLessThan(VERCEL_REQUEST_BODY_LIMIT * 1.2);
+  });
+});
+
+describe('documentContentBlocks', () => {
+  it('sends a lone document as a single unlabelled block', () => {
+    const blocks = documentContentBlocks(
+      validateDocumentSet({ base64: PDF, mediaType: 'application/pdf' }),
+    );
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].type).toBe('document');
+  });
+
+  it('labels each page of a set so the model reads them as one document', () => {
+    const blocks = documentContentBlocks(
+      validateDocumentSet({
+        pages: [
+          { base64: JPEG, mediaType: 'image/jpeg' },
+          { base64: PNG, mediaType: 'image/png' },
+        ],
+      }),
+    );
+    expect(blocks).toHaveLength(4);
+    expect(blocks[0]).toEqual({ type: 'text', text: 'Page 1 of 2:' });
+    expect(blocks[1].type).toBe('image');
+    expect(blocks[2]).toEqual({ type: 'text', text: 'Page 2 of 2:' });
+    expect(blocks[3].type).toBe('image');
   });
 });

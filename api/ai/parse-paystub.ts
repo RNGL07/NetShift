@@ -18,7 +18,7 @@ import { methodGuard, noStore, ok, withErrorHandling } from '../_lib/http.js';
 import { AI_RATE_LIMIT, consumeRateLimit } from '../_lib/rateLimit.js';
 import { claimAiUsage, getEntitlement, recordAiUsage } from '../_lib/entitlements.js';
 import { callAnthropic, parseJsonResponse } from '../_lib/anthropic.js';
-import { documentContentBlock, validateDocument } from '../_lib/documents.js';
+import { documentContentBlocks, validateDocumentSet } from '../_lib/documents.js';
 import { validatePayStub } from '../_lib/validation.js';
 
 const SYSTEM_PROMPT = [
@@ -37,12 +37,9 @@ const SYSTEM_PROMPT = [
   '- Use null for anything not shown on the stub. Never estimate or infer a missing value.',
   '- Read the CURRENT PERIOD column, never the year-to-date column.',
   '- Dates as they appear; the caller normalises them.',
+  '- A large document arrives as several labelled page images. Treat them as one stub,',
+  '  in the order given, and merge what you find across them.',
 ].join('\n');
-
-interface RequestBody {
-  base64?: unknown;
-  mediaType?: unknown;
-}
 
 export default withErrorHandling(
   'ai.parsePaystub',
@@ -53,10 +50,9 @@ export default withErrorHandling(
     const user = await requireUser(req);
     await consumeRateLimit(user.id, AI_RATE_LIMIT);
 
-    const body = (req.body ?? {}) as RequestBody;
     // Validate the file before spending allowance: a user who uploads a 30 MB
     // video should get a clear error, not a consumed parse.
-    const document = validateDocument(body);
+    const documents = validateDocumentSet((req.body ?? {}) as Record<string, unknown>);
 
     const entitlement = await getEntitlement(user.id);
     const claim = await claimAiUsage(user.id, entitlement.tier, 'parse_paystub');
@@ -71,7 +67,7 @@ export default withErrorHandling(
         system: SYSTEM_PROMPT,
         temperature: 0,
         content: [
-          documentContentBlock(document),
+          ...documentContentBlocks(documents),
           { type: 'text', text: 'Extract this pay stub as JSON per the schema.' },
         ],
       });
